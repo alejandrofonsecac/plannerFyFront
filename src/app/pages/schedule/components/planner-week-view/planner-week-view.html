@@ -1,0 +1,80 @@
+<section
+  class="planner-week-view card"
+  aria-label="Visualização semanal"
+  [style.--planner-hour-height]="hourHeight() + 'px'"
+  [style.--planner-canvas-height]="canvasHeight() + 'px'"
+  [style.--planner-event-min-height]="eventMinHeight() + 'px'"
+>
+  <header class="planner-week-view__header">
+    <div>
+      <p class="planner-week-view__eyebrow">Visão semanal</p>
+      <h2 class="planner-week-view__title">Sua semana planejada</h2>
+    </div>
+    <span class="planner-week-view__hourly-slots">Blocos de 1 hora</span>
+  </header>
+
+  @if (mobileSelectedDay(); as selectedDay) {
+    <div class="planner-week-view__mobile-day">
+      <app-planner-day-view
+        [date]="selectedDay.date"
+        [events]="mobileDayEvents()"
+        (eventRemoved)="eventRemoved.emit($event)"
+        (eventEdited)="eventEdited.emit($event)"
+      />
+    </div>
+  }
+
+  <div class="planner-week-view__scroll">
+    <div class="planner-week-view__grid">
+      <div class="planner-week-view__days" aria-hidden="true">
+        <span></span>
+        @for (day of weekDays(); track day.key) {
+          <span class="planner-week-view__day"
+            ><strong>{{ day.label }}</strong
+            >{{ day.dayNumber }}</span
+          >
+        }
+      </div>
+
+      <div class="planner-week-view__body">
+        <div class="planner-week-view__hours" aria-hidden="true">
+          @for (hour of hours; track hour) {
+            <span>{{ hour.toString().padStart(2, '0') }}:00</span>
+          }
+        </div>
+
+        @for (day of weekDays(); track day.key) {
+          <div
+            class="planner-week-view__day-canvas"
+            [attr.aria-label]="day.label + ' ' + day.dayNumber"
+          >
+            @for (group of day.eventGroups; track group.id) {
+              @if (group.events.length === 1) {
+                <app-planner-event-card
+                  class="planner-event-card--week"
+                  [event]="group.events[0]"
+                  [compact]="true"
+                  [style.top.px]="eventTop(group)"
+                  [style.height.px]="eventHeight(group)"
+                  [style.left.%]="1"
+                  [style.width.%]="98"
+                  (remove)="eventRemoved.emit($event)"
+                  (edit)="eventEdited.emit($event)"
+                />
+              } @else {
+                <app-planner-overlap-accordion
+                  class="planner-week-view__overlap-group"
+                  [events]="group.events"
+                  [style.top.px]="eventTop(group)"
+                  [style.height.px]="overlapGroupHeight(group)"
+                  (eventRemoved)="eventRemoved.emit($event)"
+                  (eventEdited)="eventEdited.emit($event)"
+                />
+              }
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>

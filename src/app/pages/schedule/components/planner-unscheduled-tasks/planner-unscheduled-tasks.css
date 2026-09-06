@@ -1,0 +1,147 @@
+:host {
+  display: block;
+}
+
+.planner-unscheduled-tasks {
+  padding: 16px 20px;
+}
+
+.planner-unscheduled-tasks__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.planner-unscheduled-tasks__header h2,
+.planner-unscheduled-tasks__header p {
+  margin: 0;
+}
+
+.planner-unscheduled-tasks__header h2 {
+  color: var(--color-text-main);
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.planner-unscheduled-tasks__header p,
+.planner-unscheduled-tasks__empty {
+  color: var(--color-text-sub);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.planner-unscheduled-tasks__count {
+  align-items: center;
+  background: var(--color-surface-elevated);
+  border-radius: 50%;
+  color: var(--color-text-sub);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.planner-unscheduled-tasks__list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.planner-unscheduled-task {
+  align-items: center;
+  background: var(--color-bg-main);
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  cursor: grab;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.planner-unscheduled-task--drag-disabled {
+  cursor: default;
+}
+
+.planner-unscheduled-task.cdk-drag-preview {
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--color-text-main) 22%, transparent);
+}
+
+.planner-unscheduled-task.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.planner-unscheduled-tasks__list.cdk-drop-list-dragging .planner-unscheduled-task:not(.cdk-drag-placeholder) {
+  transition: transform 180ms ease;
+}
+
+.planner-unscheduled-task:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-brand-primary) 40%, transparent);
+  outline-offset: 2px;
+}
+
+.planner-unscheduled-task__drag {
+  color: var(--color-text-disabled);
+  flex: none;
+  font-size: 16px;
+  height: 16px;
+  width: 16px;
+}
+
+.planner-unscheduled-task__content {
+  min-width: 0;
+}
+
+.planner-unscheduled-task__content p,
+.planner-unscheduled-task__content span {
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planner-unscheduled-task__content p {
+  color: var(--color-text-main);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.planner-unscheduled-task__content span {
+  color: var(--color-text-sub);
+  font-size: 11px;
+  margin-top: 3.2px;
+}
+
+.planner-unscheduled-task__category {
+  border-radius: 999px;
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 6.4px;
+}
+
+.planner-unscheduled-task__category--work {
+  background: color-mix(in srgb, var(--color-brand-primary) 12%, transparent);
+  color: var(--color-brand-primary);
+}
+.planner-unscheduled-task__category--study {
+  background: color-mix(in srgb, var(--color-brand-accent) 12%, transparent);
+  color: var(--color-brand-accent);
+}
+.planner-unscheduled-task__category--personal {
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  color: var(--color-warning);
+}
+.planner-unscheduled-task__category--event {
+  background: color-mix(in srgb, var(--color-error) 12%, transparent);
+  color: var(--color-error);
+}
+.planner-unscheduled-task__category--habit {
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  color: var(--color-success);
+}

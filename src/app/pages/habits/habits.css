@@ -1,0 +1,121 @@
+:host {
+  display: block;
+  min-height: calc(100vh - 64px);
+}
+
+.habits-page__new-button mat-icon {
+  font-size: 19px;
+  height: 19px;
+  width: 19px;
+}
+
+.habits-page__toolbar {
+  margin-top: 28px;
+}
+
+.habits-page__search {
+  max-width: 420px;
+}
+
+.habits-page__search mat-icon {
+  font-size: 20px;
+  height: 20px;
+  width: 20px;
+}
+
+.habits-page__filters {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.habits-page__tabs {
+  max-width: calc(100% - 56px);
+}
+
+.habits-page__count {
+  color: var(--color-text-disabled);
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+app-habit-summary-bar {
+  display: block;
+  margin-top: 18px;
+}
+
+.habits-page__grid {
+  display: block;
+  margin-top: 18px;
+}
+
+.habit-delete-backdrop {
+  background: rgb(0 0 0 / 0.38);
+  z-index: 101;
+}
+
+.habit-delete-dialog {
+  max-width: 380px;
+  padding: 24px;
+  text-align: center;
+  width: 100%;
+}
+
+.habit-delete-dialog__icon {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-error) 12%, transparent);
+  border-radius: 50%;
+  color: var(--color-error);
+  display: inline-flex;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.habit-delete-dialog__icon mat-icon {
+  font-size: 23px;
+  height: 23px;
+  width: 23px;
+}
+
+.habit-delete-dialog h2 {
+  color: var(--color-text-main);
+  font-family: var(--font-title);
+  font-size: 19px;
+  margin: 14px 0 0;
+}
+
+.habit-delete-dialog p {
+  color: var(--color-text-sub);
+  line-height: 1.45;
+  margin: 8px 0 0;
+}
+
+.habit-delete-dialog footer {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 22px;
+}
+
+.habit-delete-dialog__confirm {
+  background: var(--color-error);
+  color: var(--color-card-surface);
+}
+
+.habit-delete-dialog__confirm:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 85%, black);
+}
+
+@media (max-width: 639px) {
+  .habits-page__toolbar {
+    margin-top: 20px;
+  }
+  .habits-page__search {
+    max-width: none;
+  }
+}

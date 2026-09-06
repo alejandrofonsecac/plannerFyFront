@@ -1,0 +1,55 @@
+<div class="schedule-page">
+  <div
+    class="schedule-page__content"
+    [class.schedule-page__content--task-detail]="view() === 'tarefas' && tasksDetailOpen()"
+    [class.schedule-page__content--full]="edgeToEdge()"
+  >
+    <app-header
+      [activeContent]="activeContent()"
+      [selectedDate]="selectedDate()"
+      [viewMode]="plannerViewMode()"
+      (selectedDateChange)="selectedDate.set($event)"
+      (viewModeChange)="plannerViewMode.set($event)"
+      (primaryAction)="onPrimaryAction($event)"
+    />
+
+    <nav class="schedule-content-switcher" aria-label="Conteúdo da agenda">
+      <div class="segmented-control schedule-content-switcher__tabs">
+        <button
+          type="button"
+          (click)="setView('planejamento')"
+          class="segmented-control__option"
+          [class.segmented-control__option--active]="view() === 'planejamento'"
+          [attr.aria-current]="view() === 'planejamento' ? 'page' : null"
+        >
+          Planner
+        </button>
+        <button
+          type="button"
+          (click)="setView('tarefas')"
+          class="segmented-control__option"
+          [class.segmented-control__option--active]="view() === 'tarefas'"
+          [attr.aria-current]="view() === 'tarefas' ? 'page' : null"
+        >
+          Tasks
+        </button>
+      </div>
+    </nav>
+
+    <main class="schedule-page__main">
+      @if (view() === 'planejamento') {
+        <app-planning
+          [selectedDate]="selectedDate()"
+          [viewMode]="plannerViewMode()"
+          [newEventRequest]="newEventRequest()"
+        />
+      } @else {
+        <app-tasks
+          [layoutTier]="layoutTier()"
+          [newTaskRequest]="newTaskRequest()"
+          (detailOpenChange)="tasksDetailOpen.set($event)"
+        />
+      }
+    </main>
+  </div>
+</div>

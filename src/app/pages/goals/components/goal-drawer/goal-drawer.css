@@ -1,0 +1,28 @@
+:host {
+  display: block;
+}
+
+.goal-drawer__textarea {
+  min-height: 100px;
+}
+
+.goal-drawer__linked-note {
+  align-items: flex-start;
+  background: color-mix(in srgb, var(--color-brand-primary) 10%, transparent);
+  border-radius: 10px;
+  color: var(--color-text-sub);
+  display: flex;
+  font-size: 12px;
+  gap: 7px;
+  line-height: 1.45;
+  margin-top: 20px;
+  padding: 10px;
+}
+
+.goal-drawer__linked-note mat-icon {
+  color: var(--color-brand-primary);
+  flex: 0 0 auto;
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}

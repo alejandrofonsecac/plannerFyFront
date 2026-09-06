@@ -1,0 +1,105 @@
+<section class="habits-page page-shell">
+  <div class="habits-page__content page-container page-container--wide">
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">Hábitos</h1>
+        <p class="page-subtitle">Construa sua rotina e acompanhe a consistência que você acumulou.</p>
+      </div>
+      <button
+        type="button"
+        class="button button--primary habits-page__new-button max-sm:w-full"
+        (click)="openCreateDrawer()"
+      >
+        <mat-icon>add</mat-icon>Novo hábito
+      </button>
+    </header>
+
+    <div class="habits-page__toolbar">
+      <label class="input-shell habits-page__search">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <input
+          type="search"
+          class="input-control"
+          [value]="searchTerm()"
+          (input)="setSearchTerm(search.value)"
+          #search
+          placeholder="Buscar hábito"
+          aria-label="Buscar por nome do hábito"
+        />
+      </label>
+    </div>
+
+    <div class="habits-page__filters">
+      <nav class="tabs habits-page__tabs" aria-label="Filtrar hábitos">
+        @for (tab of tabs(); track tab.id) {
+          <button
+            type="button"
+            class="tab"
+            [class.tab--active]="activeFilter() === tab.id"
+            [attr.aria-pressed]="activeFilter() === tab.id"
+            (click)="setFilter(tab.id)"
+          >
+            {{ tab.label }}
+          </button>
+        }
+      </nav>
+      <span class="habits-page__count">{{ filteredHabits().length }} de {{ habits().length }}</span>
+    </div>
+
+    <app-habit-summary-bar [habits]="habits()" />
+
+    @if (filteredHabits().length) {
+      <app-habit-grid
+        class="habits-page__grid"
+        [habits]="filteredHabits()"
+        (edit)="openEditDrawer($event)"
+        (remove)="requestDelete($event)"
+        (statusChange)="toggleHabitStatus($event)"
+      />
+    } @else {
+      <app-habit-empty-state (create)="openCreateDrawer()" />
+    }
+  </div>
+</section>
+
+@if (drawerOpen()) {
+  <app-habit-drawer
+    [habit]="editingHabit()"
+    (dismissed)="closeDrawer()"
+    (formSubmitted)="saveHabit($event)"
+  />
+}
+
+@if (deleteCandidate(); as habit) {
+  <div
+    class="modal-backdrop habit-delete-backdrop"
+    tabindex="-1"
+    (click)="cancelDeleteFromBackdrop($event)"
+    (keydown.escape)="cancelDelete()"
+  >
+    <section
+      class="modal-dialog habit-delete-dialog"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="habit-delete-title"
+    >
+      <span class="habit-delete-dialog__icon" aria-hidden="true"
+        ><mat-icon>delete_forever</mat-icon></span
+      >
+      <h2 id="habit-delete-title">Excluir hábito?</h2>
+      <p>“{{ habit.name }}” e seu histórico não poderão ser recuperados.</p>
+      <footer>
+        <button type="button" class="button button--secondary" (click)="cancelDelete()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="button button--danger habit-delete-dialog__confirm"
+          (click)="confirmDelete()"
+        >
+          Excluir
+        </button>
+      </footer>
+    </section>
+  </div>
+}

@@ -1,0 +1,36 @@
+mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+mat-icon.icon-lg {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+mat-icon.icon-xl {
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+}
+
+@media (max-width: 640px) {
+  .task-row {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .task-row__meta {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    margin-left: 32px;
+    width: calc(100% - 32px);
+  }
+}
+

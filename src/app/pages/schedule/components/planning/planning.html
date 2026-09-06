@@ -1,0 +1,82 @@
+<section
+  class="planner-layout"
+  [class.planner-layout--weekly]="viewMode() === 'weekly'"
+  aria-label="Planejador"
+>
+  <div class="planner-layout__timeline">
+    @if (viewMode() === 'daily') {
+      <app-planner-day-view
+        [date]="selectedDate()"
+        [events]="dayEvents()"
+        [dragEnabled]="dragAndDropEnabled()"
+        (taskDropped)="onTaskDropped($event.event, $event.slotTime)"
+        (eventRemoved)="removeEvent($event)"
+        (eventEdited)="openEventEditor($event)"
+      />
+    } @else {
+      <app-planner-week-view
+        [date]="selectedDate()"
+        [events]="events()"
+        (eventRemoved)="removeEvent($event)"
+        (eventEdited)="openEventEditor($event)"
+      />
+    }
+  </div>
+
+  @if (viewMode() === 'daily') {
+    <aside class="planner-layout__daily-aside" aria-label="Painel lateral do planejador">
+      <app-planner-unscheduled-tasks
+        [tasks]="unscheduledTasks()"
+        [connectedDropListIds]="dailyDropListIds"
+        [dragEnabled]="dragAndDropEnabled()"
+      />
+
+      <app-planner-sidebar
+        [date]="selectedDate()"
+        [events]="dayEvents()"
+        [taskCount]="taskCount()"
+        [eventCount]="eventCount()"
+        [habits]="habits()"
+        [plannedHours]="plannedHours()"
+        [freeTime]="freeTime()"
+        [freeTimePercentage]="freeTimePercentage()"
+        (habitToggled)="toggleHabit($event)"
+      />
+    </aside>
+  } @else {
+    <app-planner-sidebar
+      [date]="selectedDate()"
+      [events]="dayEvents()"
+      [taskCount]="taskCount()"
+      [eventCount]="eventCount()"
+      [habits]="habits()"
+      [plannedHours]="plannedHours()"
+      [freeTime]="freeTime()"
+      [freeTimePercentage]="freeTimePercentage()"
+      (habitToggled)="toggleHabit($event)"
+    />
+  }
+
+  <app-planner-event-form
+    [open]="eventFormOpen()"
+    [date]="selectedDate()"
+    [event]="editingEvent()"
+    (cancelled)="closeEventForm()"
+    (created)="createEvent($event)"
+    (updated)="updateEvent($event)"
+    (removed)="removeEditingEvent($event)"
+  />
+
+  @if (aiOrganizationPrompt()) {
+    <div class="planner-ai-alert" role="dialog" aria-modal="true" aria-labelledby="planner-ai-alert-title">
+      <div class="planner-ai-alert__content">
+        <p id="planner-ai-alert-title">Este bloco de uma hora já está ocupado.</p>
+        <p>Escolha outro horário disponível para agendar esta atividade.</p>
+        <div class="planner-ai-alert__actions">
+          <button type="button" (click)="aiOrganizationPrompt.set(false)">Agora não</button>
+          <button type="button" class="planner-ai-alert__primary" (click)="aiOrganizationPrompt.set(false)">Entendi</button>
+        </div>
+      </div>
+    </div>
+  }
+</section>
