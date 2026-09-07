@@ -1,0 +1,97 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.weekly-goals-card {
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.weekly-goals-card__header,
+.weekly-goals-card__header h2,
+.weekly-goals-card__metadata {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.weekly-goals-card__header {
+  justify-content: space-between;
+}
+
+.weekly-goals-card__header h2 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.weekly-goals-card__header mat-icon {
+  color: var(--color-brand-primary);
+  flex-shrink: 0;
+  font-size: 20px;
+  height: 20px;
+  width: 20px;
+}
+
+.weekly-goals-card__count,
+.weekly-goals-card__priority {
+  background: var(--color-surface-elevated);
+  border-radius: 6px;
+  padding: 3px 7px;
+}
+
+.weekly-goals-card__count {
+  color: var(--color-text-sub);
+  font-size: 12px;
+}
+
+.weekly-goals-card__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.weekly-goals-card__item {
+  padding-top: 18px;
+}
+
+.weekly-goals-card__item + .weekly-goals-card__item {
+  border-top: 1px solid var(--color-border);
+  margin-top: 18px;
+}
+
+.weekly-goals-card__item h3 {
+  color: var(--color-text-main);
+  font-size: 16px;
+  line-height: 1.4;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.weekly-goals-card__description,
+.weekly-goals-card__message {
+  color: var(--color-text-sub);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.weekly-goals-card__description {
+  margin: 8px 0 12px;
+  white-space: pre-line;
+}
+
+.weekly-goals-card__message {
+  margin: 18px 0;
+}
+
+.weekly-goals-card__metadata {
+  color: var(--color-text-sub);
+  flex-wrap: wrap;
+  font-size: 11px;
+}
+
+.weekly-goals-card__priority--high {
+  color: var(--color-brand-primary);
+  font-weight: 600;
+}

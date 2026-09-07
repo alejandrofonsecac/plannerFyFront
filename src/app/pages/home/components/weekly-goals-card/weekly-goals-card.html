@@ -1,0 +1,46 @@
+<section
+  class="card card--elevated card--padded weekly-goals-card"
+  aria-labelledby="weekly-goals-title"
+  [attr.aria-busy]="loading()"
+>
+  <header class="weekly-goals-card__header">
+    <h2 id="weekly-goals-title">
+      <mat-icon aria-hidden="true">flag</mat-icon>
+      Metas semanais
+    </h2>
+    @if (!loading() && !error() && goals().length > 0) {
+      <span class="weekly-goals-card__count">{{ goals().length }}</span>
+    }
+  </header>
+
+  <div aria-live="polite">
+    @if (loading()) {
+      <p class="weekly-goals-card__message">Carregando metas semanais...</p>
+    } @else if (error(); as errorMessage) {
+      <p class="weekly-goals-card__message">{{ errorMessage }}</p>
+      <button type="button" class="button button--secondary button--compact" (click)="loadGoals()">
+        Tentar novamente
+      </button>
+    } @else {
+      <ul class="weekly-goals-card__list">
+        @for (goal of goals(); track goal.id) {
+          <li class="weekly-goals-card__item">
+            <h3>{{ goal.title }}</h3>
+            <p class="weekly-goals-card__description">{{ goal.description }}</p>
+            <div class="weekly-goals-card__metadata">
+              <span>{{ categoryLabels[goal.category] }}</span>
+              <span
+                class="weekly-goals-card__priority"
+                [class.weekly-goals-card__priority--high]="goal.priority === 'HIGH'"
+              >
+                Prioridade: {{ priorityLabels[goal.priority] }}
+              </span>
+            </div>
+          </li>
+        } @empty {
+          <li class="weekly-goals-card__message">Nenhuma meta semanal cadastrada.</li>
+        }
+      </ul>
+    }
+  </div>
+</section>
