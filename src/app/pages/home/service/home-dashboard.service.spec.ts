@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ApiClient } from '../../../core/data-access/api-client.service';
 import { WeatherResponse } from '../models/weather';
 import { HomeDashboardService } from './home-dashboard.service';
-import { WeatherService } from './weatherService.service';
+import { WeatherService } from './weather/weatherService.service';
 
 describe('HomeDashboardService weather', () => {
   it('shows weather while other requests are pending and preserves it when they finish', () => {

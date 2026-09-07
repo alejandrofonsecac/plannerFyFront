@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { API_BASE_URL } from '../../../core/data-access/api-client.service';
+import { API_BASE_URL } from '../../../../core/data-access/api-client.service';
 import { WeatherService } from './weatherService.service';
 
 describe('WeatherService', () => {

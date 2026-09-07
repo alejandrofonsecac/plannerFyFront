@@ -12,10 +12,11 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { HomeDashboardService } from './service/home-dashboard.service';
+import { WeeklyGoalsCard } from './components/weekly-goals-card/weekly-goals-card';
 
 @Component({
   selector: 'app-home',
-  imports: [MatIconModule, RouterLink],
+  imports: [MatIconModule, RouterLink, WeeklyGoalsCard],
   templateUrl: './home.html',
   styleUrl: './home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -2,8 +2,6 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { catchError, forkJoin, of } from 'rxjs';
 import { ApiClient } from '../../../core/data-access/api-client.service';
 import { CalendarEvent } from '../../calendar/models';
-import { Goal } from '../../goals/models/goal';
-import { weekIdFor } from '../../goals/utils/week.utils';
 import { Habit } from '../../habits/models/habit';
 import { calculateHabitSummary } from '../../habits/utils/habit-metrics';
 import {
@@ -16,7 +14,7 @@ import {
 } from '../../schedule/models';
 import { SCHEDULE_TASKS_LIST_RESOURCE } from '../../schedule/service/schedule-tasks.endpoints';
 import { WeatherResponse } from '../models/weather';
-import { WeatherService } from './weatherService.service';
+import { WeatherService } from './weather/weatherService.service';
 
 export type HomeTimeSegmentStatus = 'busy' | 'attention' | 'free' | 'unknown';
 
@@ -25,7 +23,6 @@ interface HomeBackendData {
   plannerEvents: PlannerEvent[] | null;
   plannerAvailability: PlannerDayAvailability | null;
   habits: Habit[] | null;
-  goals: Goal[] | null;
   calendarEvents: CalendarEvent[] | null;
 }
 
@@ -64,12 +61,6 @@ export interface HomeDashboardData {
     progressLabel: string;
     progress: number | null;
     actionLabel: string;
-  };
-  weeklyGoal: {
-    label: string;
-    title: string | null;
-    progress: number | null;
-    status: string | null;
   };
   agenda: {
     title: string;
@@ -114,7 +105,7 @@ function currentDayData(weather: WeatherResponse | null): HomeDashboardData['day
     weekday: `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}`,
     number: String(today.getDate()).padStart(2, '0'),
     month: `${month.charAt(0).toUpperCase()}${month.slice(1)}`,
-    weatherIcon: weather ? WEATHER_ICONS[weather.condition] ?? 'cloud' : 'cloud_off',
+    weatherIcon: weather ? (WEATHER_ICONS[weather.condition] ?? 'cloud') : 'cloud_off',
     temperature: weather
       ? `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(weather.temperature)} °C`
       : null,
@@ -177,32 +168,6 @@ function currentFocus(tasks: Task[] | null): HomeDashboardData['focus'] {
     progressLabel: 'Progresso',
     progress: task ? 0 : null,
     actionLabel: 'Abrir tarefas',
-  };
-}
-
-function goalProgress(goal: Goal): number | null {
-  if (goal.taskLinks.length === 0) return null;
-
-  const completed = goal.taskLinks.filter((task) => task.completed).length;
-  return Math.round((completed / goal.taskLinks.length) * 100);
-}
-
-function goalStatus(goal: Goal): string {
-  if (goal.status === 'CONCLUIDA') return 'Concluída';
-  if (goal.status === 'EM_ANDAMENTO') return 'Em andamento';
-  return 'Planejada';
-}
-
-function weeklyGoal(goals: Goal[] | null, today: Date): HomeDashboardData['weeklyGoal'] {
-  const goalsForCurrentWeek = goals?.filter((item) => item.weekId === weekIdFor(today));
-  const goal =
-    goalsForCurrentWeek?.find((item) => item.status !== 'CONCLUIDA') ?? goalsForCurrentWeek?.[0];
-
-  return {
-    label: 'META DA SEMANA',
-    title: goal?.title ?? null,
-    progress: goal ? goalProgress(goal) : null,
-    status: goal ? goalStatus(goal) : null,
   };
 }
 
@@ -292,7 +257,10 @@ function summary(
   ];
 }
 
-function createDashboardData(data: HomeBackendData, weather: WeatherResponse | null): HomeDashboardData {
+function createDashboardData(
+  data: HomeBackendData,
+  weather: WeatherResponse | null,
+): HomeDashboardData {
   const today = new Date();
 
   return {
@@ -307,7 +275,6 @@ function createDashboardData(data: HomeBackendData, weather: WeatherResponse | n
     day: currentDayData(weather),
     availableTime: availableTime(data.plannerEvents, data.plannerAvailability, today),
     focus: currentFocus(data.tasks),
-    weeklyGoal: weeklyGoal(data.goals, today),
     agenda: agenda(data.calendarEvents, data.plannerEvents, today),
     habits: {
       title: 'Hábitos',
@@ -328,7 +295,6 @@ const INITIAL_BACKEND_DATA: HomeBackendData = {
   plannerEvents: null,
   plannerAvailability: null,
   habits: null,
-  goals: null,
   calendarEvents: null,
 };
 
@@ -352,7 +318,6 @@ export class HomeDashboardService {
       plannerEvents: this.requestList<PlannerEvent>('planner/events'),
       plannerAvailability: this.requestPlannerAvailability(today),
       habits: this.requestList<Habit>('habits'),
-      goals: this.requestList<Goal>('goals'),
       calendarEvents: this.requestList<CalendarEvent>('calendar-events'),
     }).subscribe((data) => this.backendData.set(data));
   }

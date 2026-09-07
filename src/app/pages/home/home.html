@@ -1,44 +1,4 @@
 <main class="home-page">
-  <header class="home-header">
-    <a class="home-header__brand" routerLink="/home" aria-label="Ir para o início">
-      <span>{{ dashboard().appName }}</span
-      ><span aria-hidden="true">/</span><strong>{{ dashboard().pageName }}</strong>
-    </a>
-
-    <div class="home-header__actions">
-      <label class="input-shell home-search" for="home-search">
-        <mat-icon aria-hidden="true">search</mat-icon>
-        <input
-          #searchInput
-          id="home-search"
-          class="input-control"
-          type="search"
-          placeholder="Procurar..."
-          [value]="searchQuery()"
-          (input)="updateSearch($event)"
-          (keydown)="onSearchKeydown($event)"
-          aria-label="Procurar no espaço pessoal"
-        />
-        @if (searchQuery()) {
-          <button
-            type="button"
-            class="home-search__clear"
-            (click)="clearSearch()"
-            aria-label="Limpar busca"
-          >
-            <mat-icon aria-hidden="true">close</mat-icon>
-          </button>
-        } @else {
-          <kbd>⌘K</kbd>
-        }
-      </label>
-
-      <span class="home-header__avatar" [attr.aria-label]="dashboard().profile.name ?? 'Null'">
-        {{ dashboard().profile.initials }}
-      </span>
-    </div>
-  </header>
-
   <p class="home-search-status" aria-live="polite">{{ searchStatus() }}</p>
 
   <section class="home-welcome" aria-labelledby="home-title">
@@ -123,21 +83,7 @@
       >
     </article>
 
-    <article class="card card--elevated card--padded home-goal-card">
-      <div
-        class="home-goal-card__ring"
-        [style.--goal-progress]="(dashboard().weeklyGoal.progress ?? 0) + '%'"
-      >
-        <strong>{{
-          dashboard().weeklyGoal.progress === null ? 'Null' : dashboard().weeklyGoal.progress + '%'
-        }}</strong>
-      </div>
-      <div>
-        <p class="eyebrow home-card__eyebrow">{{ dashboard().weeklyGoal.label }}</p>
-        <h2>{{ dashboard().weeklyGoal.title ?? 'Null' }}</h2>
-        <p>{{ dashboard().weeklyGoal.status ?? 'Null' }}</p>
-      </div>
-    </article>
+    <app-weekly-goals-card />
 
     <article class="card card--elevated card--padded home-agenda-card lg:col-span-2 xl:col-auto">
       <header class="section-heading">

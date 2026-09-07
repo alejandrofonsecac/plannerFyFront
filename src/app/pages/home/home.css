@@ -11,90 +11,6 @@
   padding: 28px clamp(20px, 4vw, 52px) 36px;
 }
 
-.home-header,
-.home-header__actions,
-.home-header__brand,
-.home-day-card__topline,
-.home-progress__label,
-.home-habit > div > div {
-  align-items: center;
-  display: flex;
-}
-
-.home-header {
-  justify-content: space-between;
-  gap: 24px;
-  min-height: 42px;
-}
-
-.home-header__brand {
-  color: var(--color-text-sub);
-  font-size: 14px;
-  gap: 8px;
-  text-decoration: none;
-}
-
-.home-header__brand strong {
-  color: var(--color-text-main);
-  font-weight: 700;
-}
-
-.home-header__actions {
-  gap: 12px;
-}
-
-.home-search {
-  gap: 8px;
-  min-height: 38px;
-  padding: 0 8px 0 11px;
-  width: min(32vw, 310px);
-}
-
-.home-search mat-icon,
-.home-search__clear mat-icon {
-  font-size: 18px;
-  height: 18px;
-  width: 18px;
-}
-
-.home-search .input-control {
-  font-size: 13px;
-  padding: 0;
-}
-
-.home-search kbd {
-  background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  color: var(--color-text-sub);
-  font-family: inherit;
-  font-size: 10px;
-  padding: 2px 5px;
-  white-space: nowrap;
-}
-
-.home-search__clear {
-  border: 0;
-  cursor: pointer;
-  font: inherit;
-}
-
-.home-search__clear {
-  align-items: center;
-  background: transparent;
-  border-radius: 5px;
-  color: var(--color-text-sub);
-  display: inline-flex;
-  justify-content: center;
-  padding: 3px;
-}
-
-.home-search__clear:hover,
-.home-search__clear:focus-visible {
-  background: var(--color-surface-elevated);
-  color: var(--color-text-main);
-}
-
 .home-header__avatar {
   align-items: center;
   background: var(--color-brand-primary);
@@ -110,26 +26,15 @@
   width: 32px;
 }
 
-.home-search-status {
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  position: absolute;
-  white-space: nowrap;
-  width: 1px;
-}
-
 .home-welcome {
-  margin: clamp(42px, 8vw, 80px) 0 30px;
+  margin: clamp(21px, 8vw, 36px) 0 30px;
   max-width: 710px;
 }
 
 .home-welcome h1 {
   font-family: var(--font-title);
   font-size: clamp(34px, 5vw, 56px);
-  letter-spacing: -.045em;
+  letter-spacing: -0.045em;
   line-height: 1;
   margin: 10px 0 14px;
 }
@@ -141,7 +46,11 @@
 }
 
 .home-day-card {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-brand-primary) 9%, var(--color-card-surface)), var(--color-card-surface) 58%);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-brand-primary) 9%, var(--color-card-surface)),
+    var(--color-card-surface) 58%
+  );
 }
 
 .home-day-card__topline {
@@ -189,8 +98,8 @@
   color: var(--color-text-main);
   font-family: var(--font-title);
   font-size: 52px;
-  letter-spacing: -.06em;
-  line-height: .9;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
 }
 
 .home-day-card__date span {
@@ -203,7 +112,6 @@
 .home-day-card__greeting,
 .home-time-card__description,
 .home-focus-card > p:not(.eyebrow),
-.home-goal-card p,
 .home-agenda-list span {
   color: var(--color-text-sub);
 }
@@ -236,7 +144,7 @@
 .home-time-card__value {
   font-family: var(--font-title);
   font-size: clamp(27px, 3vw, 38px);
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
   margin: 15px 0 22px;
 }
 
@@ -267,10 +175,9 @@
   padding-top: 15px;
 }
 
-.home-focus-card h2,
-.home-goal-card h2 {
+.home-focus-card h2 {
   font-size: 18px;
-  letter-spacing: -.018em;
+  letter-spacing: -0.018em;
   line-height: 1.25;
   margin: 13px 0 8px;
 }
@@ -308,48 +215,6 @@
 
 .home-text-action:hover {
   color: var(--color-brand-hover);
-}
-
-.home-goal-card {
-  align-items: center;
-  display: flex;
-  gap: 17px;
-}
-
-.home-goal-card__ring {
-  align-items: center;
-  background: conic-gradient(var(--color-brand-primary) var(--goal-progress), var(--color-surface-elevated) 0);
-  border-radius: 50%;
-  display: flex;
-  flex: 0 0 auto;
-  height: 86px;
-  justify-content: center;
-  position: relative;
-  width: 86px;
-}
-
-.home-goal-card__ring::after {
-  background: var(--color-card-surface);
-  border-radius: inherit;
-  content: '';
-  inset: 7px;
-  position: absolute;
-}
-
-.home-goal-card__ring strong {
-  font-size: 17px;
-  position: relative;
-  z-index: 1;
-}
-
-.home-goal-card p {
-  font-size: 12px;
-  line-height: 1.4;
-  margin: 0;
-}
-
-.home-goal-card .eyebrow {
-  font-size: 10px;
 }
 
 .home-agenda-list {
@@ -492,7 +357,7 @@
 .home-summary__grid strong {
   font-family: var(--font-title);
   font-size: 20px;
-  letter-spacing: -.03em;
+  letter-spacing: -0.03em;
 }
 
 .home-summary__grid span {
@@ -522,7 +387,6 @@
   .home-welcome {
     margin-top: 48px;
   }
-
 }
 
 @media (max-width: 390px) {
@@ -536,10 +400,5 @@
 
   .home-search {
     width: 100%;
-  }
-
-  .home-goal-card {
-    align-items: flex-start;
-    flex-direction: column;
   }
 }

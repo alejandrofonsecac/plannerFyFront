@@ -1,9 +1,9 @@
 import { HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, TimeoutError, defer, finalize, map, switchMap, timeout } from 'rxjs';
-import { ApiClient } from '../../../core/data-access/api-client.service';
-import { WeatherResponse } from '../models/weather';
-import { WeatherValidator } from '../validation/weather.validator';
+import { ApiClient } from '../../../../core/data-access/api-client.service';
+import { WeatherResponse } from '../../models/weather';
+import { WeatherValidator } from '../../validation/weather.validator';
 
 @Injectable({ providedIn: 'root' })
 export class WeatherService {
