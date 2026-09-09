@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { WeeklyFocus } from '../../models/goal';
+import { WeeklyFocus } from '../../../../shared/goals/goal.models';
 
 @Component({
   selector: 'app-goal-focus',
@@ -12,6 +12,7 @@ import { WeeklyFocus } from '../../models/goal';
 })
 export class GoalFocus {
   readonly focus = input<WeeklyFocus | null>(null);
+  readonly saving = input(false);
   readonly save = output<WeeklyFocus>();
   readonly editing = signal(false);
   draft: WeeklyFocus = { focus: '', message: '' };
@@ -35,8 +36,7 @@ export class GoalFocus {
   }
 
   submit(): void {
-    if (!this.draft.focus.trim()) return;
+    if (this.saving() || !this.draft.focus.trim()) return;
     this.save.emit({ focus: this.draft.focus.trim(), message: this.draft.message.trim() });
-    this.editing.set(false);
   }
 }

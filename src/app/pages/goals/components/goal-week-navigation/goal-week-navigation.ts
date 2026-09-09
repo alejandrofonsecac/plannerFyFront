@@ -1,19 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { isCurrentWeek, weekIdFor, weekRangeLabel } from '../../utils/week.utils';
-
+import { GoalWeek } from '../../../../shared/goals/goal.models';
 @Component({
   selector: 'app-goal-week-navigation',
-  imports: [MatIconModule],
+  imports: [MatIconModule, DatePipe],
   templateUrl: './goal-week-navigation.html',
   styleUrl: './goal-week-navigation.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GoalWeekNavigation {
-  readonly selectedDate = input.required<Date>();
+  readonly week = input.required<GoalWeek>();
+  readonly disabled = input(false);
   readonly previous = output<void>();
   readonly next = output<void>();
   readonly current = output<void>();
-  readonly label = computed(() => weekRangeLabel(this.selectedDate()));
-  readonly isCurrent = computed(() => isCurrentWeek(weekIdFor(this.selectedDate())));
 }

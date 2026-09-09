@@ -25,8 +25,8 @@
       <ul class="weekly-goals-card__list">
         @for (goal of goals(); track goal.id) {
           <li class="weekly-goals-card__item">
-            <h3>{{ goal.title }}</h3>
-            <p class="weekly-goals-card__description">{{ goal.description }}</p>
+            <h3>{{ goal.name }}</h3>
+            <p class="weekly-goals-card__description">{{ goal.expectedTarget }}</p>
             <div class="weekly-goals-card__metadata">
               <span>{{ categoryLabels[goal.category] }}</span>
               <span

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { Goal } from '../../models/goal';
+import { Goal } from '../../../../shared/goals/goal.models';
 import { GoalCard } from '../goal-card/goal-card';
 
 @Component({
@@ -10,6 +10,7 @@ import { GoalCard } from '../goal-card/goal-card';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GoalList {
+  readonly saving = input(false);
   readonly goals = input<Goal[]>([]);
   readonly edit = output<Goal>();
   readonly complete = output<Goal>();

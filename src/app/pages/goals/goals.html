@@ -3,81 +3,97 @@
     <header class="page-header">
       <div>
         <h1 class="page-title">Metas Semanais</h1>
-        <p class="page-subtitle">Escolha os resultados que merecem sua atenção nos próximos dias.</p>
+        <p class="page-subtitle">
+          Escolha os resultados que merecem sua atenção nos próximos dias.
+        </p>
       </div>
       <button
         type="button"
         class="button button--primary goals-page__new-button max-sm:w-full"
         (click)="openCreateDrawer()"
+        [disabled]="loading() || saving() || !board()"
       >
         <mat-icon>add</mat-icon>Nova meta
       </button>
     </header>
 
-    <app-goal-week-navigation
-      [selectedDate]="selectedDate()"
-      (previous)="previousWeek()"
-      (next)="nextWeek()"
-      (current)="goToCurrentWeek()"
-    />
-    <app-goal-focus [focus]="focus()" (save)="saveFocus($event)" />
+    @if (board(); as data) {
+      <app-goal-week-navigation
+        [week]="data.week"
+        [disabled]="loading() || saving()"
+        (previous)="navigate(data.week.previousId)"
+        (next)="navigate(data.week.nextId)"
+        (current)="navigate(data.week.currentId)"
+      />
+      <app-goal-focus
+        [focus]="data.focus"
+        [saving]="saving() || loading()"
+        (save)="saveFocus($event)"
+      />
 
-    @if (summary().total) {
-      <p class="goals-page__summary">
-        {{ summary().completed }} de {{ summary().total }} metas concluídas
-        <span aria-hidden="true" class="inline-block h-[3px] w-[3px] rounded-full bg-text-disabled"></span>
-        {{ summary().percentage }}%
-      </p>
-    } @else {
-      <p class="goals-page__summary">Sua semana ainda está aberta para o que realmente importa.</p>
+      @if (data.summary.total) {
+        <p class="goals-page__summary">
+          {{ data.summary.completed }} de {{ data.summary.total }} metas concluídas
+          <span
+            aria-hidden="true"
+            class="inline-block h-[3px] w-[3px] rounded-full bg-text-disabled"
+          ></span>
+          {{ data.summary.percentage }}%
+        </p>
+      } @else {
+        <p class="goals-page__summary">
+          Sua semana ainda está aberta para o que realmente importa.
+        </p>
+      }
+
+      <div
+        class="mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+      >
+        <nav class="tabs" aria-label="Filtrar metas por estado">
+          <button
+            type="button"
+            class="tab"
+            [class.tab--active]="stateFilter() === ''"
+            [attr.aria-pressed]="stateFilter() === ''"
+            (click)="setStateFilter('')"
+          >
+            Todas
+          </button>
+          <button
+            type="button"
+            class="tab"
+            [class.tab--active]="stateFilter() === 'IN_PROGRESS'"
+            [attr.aria-pressed]="stateFilter() === 'IN_PROGRESS'"
+            (click)="setStateFilter('IN_PROGRESS')"
+          >
+            Em andamento
+          </button>
+          <button
+            type="button"
+            class="tab"
+            [class.tab--active]="stateFilter() === 'COMPLETED'"
+            [attr.aria-pressed]="stateFilter() === 'COMPLETED'"
+            (click)="setStateFilter('COMPLETED')"
+          >
+            Concluídas
+          </button>
+        </nav>
+        <label class="input-shell goals-page__category-filter"
+          >Categoria
+          <select
+            class="cursor-pointer bg-transparent text-[13px] outline-none"
+            [value]="categoryFilter()"
+            (change)="setCategoryFilter(category.value)"
+            #category
+          >
+            <option value="">Todas as categorias</option>
+            @for (item of data.options.categories; track item.value) {
+              <option [value]="item.value">{{ item.label }}</option>
+            }
+          </select>
+        </label>
+      </div>
     }
-
-    <div class="mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-      <nav class="tabs" aria-label="Filtrar metas por estado">
-        <button
-          type="button"
-          class="tab"
-          [class.tab--active]="stateFilter() === 'all'"
-          [attr.aria-pressed]="stateFilter() === 'all'"
-          (click)="setStateFilter('all')"
-        >
-          Todas
-        </button>
-        <button
-          type="button"
-          class="tab"
-          [class.tab--active]="stateFilter() === 'in-progress'"
-          [attr.aria-pressed]="stateFilter() === 'in-progress'"
-          (click)="setStateFilter('in-progress')"
-        >
-          Em andamento
-        </button>
-        <button
-          type="button"
-          class="tab"
-          [class.tab--active]="stateFilter() === 'completed'"
-          [attr.aria-pressed]="stateFilter() === 'completed'"
-          (click)="setStateFilter('completed')"
-        >
-          Concluídas
-        </button>
-      </nav>
-      <label class="input-shell goals-page__category-filter"
-        >Categoria
-        <select
-          class="cursor-pointer bg-transparent text-[13px] outline-none"
-          [value]="categoryFilter()"
-          (change)="setCategoryFilter(category.value)"
-          #category
-        >
-          <option value="all">Todas as categorias</option>
-          @for (item of categories(); track item.id) {
-            <option [value]="item.id">{{ item.name }}</option>
-          }
-        </select>
-      </label>
-    </div>
-
     @if (loading()) {
       <section class="card mt-4 flex items-center gap-2 p-5 text-text-sub" aria-live="polite">
         <mat-icon>progress_activity</mat-icon>Carregando metas da semana…
@@ -85,10 +101,14 @@
     } @else if (error()) {
       <section class="card mt-4 flex items-center gap-2 p-5 text-error" role="alert">
         <mat-icon>error</mat-icon>{{ error() }}
+        <button type="button" class="button button--secondary" (click)="reloadGoals()">
+          Tentar novamente
+        </button>
       </section>
-    } @else if (filteredGoals().length) {
+    } @else if (board()?.goals?.length) {
       <app-goal-list
-        [goals]="filteredGoals()"
+        [goals]="board()!.goals"
+        [saving]="saving()"
         (edit)="openEditDrawer($event)"
         (complete)="completeGoal($event)"
         (defer)="deferGoal($event)"
@@ -99,9 +119,13 @@
   </div>
 </section>
 
-@if (drawerOpen()) {
+@if (drawerOpen() ? board() : null; as data) {
   <app-goal-drawer
     [goal]="editingGoal()"
+    [defaults]="data.defaults"
+    [options]="data.options"
+    [saving]="saving()"
+    [error]="error()"
     (dismissed)="closeDrawer()"
     (formSubmitted)="saveGoal($event)"
   />

@@ -6,6 +6,7 @@
         type="button"
         class="button button--ghost button--compact button--icon"
         aria-label="Editar foco da semana"
+        [disabled]="saving()"
         (click)="startEditing()"
       >
         <mat-icon>edit</mat-icon>
@@ -36,13 +37,18 @@
         />
       </label>
       <footer>
-        <button type="button" class="button button--secondary button--compact" (click)="cancel()">
+        <button
+          type="button"
+          class="button button--secondary button--compact"
+          [disabled]="saving()"
+          (click)="cancel()"
+        >
           Cancelar
         </button>
         <button
           type="submit"
           class="button button--primary button--compact"
-          [disabled]="!draft.focus.trim()"
+          [disabled]="saving() || !draft.focus.trim()"
         >
           Salvar foco
         </button>

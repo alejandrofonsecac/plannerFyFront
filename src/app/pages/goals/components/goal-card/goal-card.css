@@ -86,33 +86,6 @@
   line-height: 1.45;
   margin: 15px 0 0;
 }
-.goal-card__progress {
-  align-items: center;
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-.goal-card__progress-track {
-  background: var(--color-bg-sub);
-  border-radius: 99px;
-  display: block;
-  height: 7px;
-  overflow: hidden;
-  width: 100%;
-}
-.goal-card__progress-track i {
-  background: var(--color-brand-primary);
-  border-radius: inherit;
-  display: block;
-  height: 100%;
-  transition: width 0.2s ease;
-}
-.goal-card__progress strong {
-  color: var(--color-text-main);
-  font-size: 12px;
-  min-width: 32px;
-  text-align: right;
-}
 .goal-card__meta {
   color: var(--color-text-disabled);
   display: flex;
@@ -120,10 +93,6 @@
   justify-content: space-between;
   margin-top: 9px;
 }
-.goal-card__meta--binary {
-  margin-top: 16px;
-}
-
 .goal-card__details {
   border-top: 1px solid var(--color-border);
   display: grid;
@@ -144,48 +113,6 @@
   line-height: 1.5;
   margin: 5px 0 0;
 }
-.goal-card__steps ul {
-  display: grid;
-  gap: 7px;
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-}
-.goal-card__steps li {
-  align-items: center;
-  color: var(--color-text-main);
-  display: flex;
-  font-size: 13px;
-  gap: 7px;
-}
-.goal-card__steps li mat-icon {
-  color: var(--color-text-disabled);
-  font-size: 17px;
-  height: 17px;
-  width: 17px;
-}
-.goal-card__steps li.goal-card__step--done {
-  color: var(--color-text-sub);
-  text-decoration: line-through;
-}
-.goal-card__steps li.goal-card__step--done mat-icon {
-  color: var(--color-success);
-}
-.goal-card__habit-step {
-  align-items: center;
-  display: flex;
-  gap: 6px;
-}
-.goal-card__habit-step mat-icon {
-  color: var(--color-brand-primary);
-  font-size: 18px;
-  height: 18px;
-  width: 18px;
-}
-.goal-card__full-progress .goal-card__progress {
-  margin-top: 8px;
-}
-
 .goal-card__actions {
   align-items: center;
   border-top: 1px solid var(--color-border);

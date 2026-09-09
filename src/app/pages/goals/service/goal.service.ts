@@ -1,148 +1,85 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { catchError, finalize, of } from 'rxjs';
-import { ApiClient, withoutId } from '../../../core/data-access/api-client.service';
-import { DemoDataStore } from '../../../core/data-access/demo-data-store.service';
-import { Goal, GoalDraft, GoalStatus, WeeklyFocus } from '../models/goal';
-import { toDateKey } from '../../habits/utils/habit-metrics';
-import { weekIdFor } from '../utils/week.utils';
-
-const RESOURCE = 'goals';
-
-function statusForWeek(weekId: string): GoalStatus {
-  return weekId === weekIdFor(new Date()) ? 'EM_ANDAMENTO' : 'PLANEJADA';
-}
-
-function createDemoGoal(): Goal {
-  const today = new Date();
-  return {
-    id: 1,
-    weekId: weekIdFor(today),
-    title: 'Exemplo de meta semanal',
-    expectedResult: 'Visualizar o layout enquanto a API não possui metas cadastradas.',
-    priority: 'MEDIA',
-    categoryId: 'pessoal',
-    status: 'EM_ANDAMENTO',
-    deferredCount: 0,
-    createdAt: toDateKey(today),
-    taskLinks: [],
-  };
-}
+import { Observable, firstValueFrom, Subscription } from 'rxjs';
+import { ApiClient } from '../../../core/data-access/api-client.service';
+import {
+  Goal,
+  GoalRequest,
+  GoalFilters,
+  GoalsBoard,
+  WeeklyFocus,
+} from '../../../shared/goals/goal.models';
 
 @Injectable({ providedIn: 'root' })
 export class GoalService {
   private readonly api = inject(ApiClient);
-  private readonly demoDataStore = inject(DemoDataStore);
-
-  readonly goals = signal<Goal[]>([]);
-  readonly weeklyFocus = signal<Record<string, WeeklyFocus>>({});
+  private filters: GoalFilters = {};
+  private pendingLoad?: Subscription;
+  readonly board = signal<GoalsBoard | null>(null);
   readonly loading = signal(false);
+  readonly saving = signal(false);
   readonly error = signal<string | null>(null);
 
-  constructor() {
-    this.load();
-  }
-
-  load(): void {
+  load(filters: GoalFilters = this.filters): void {
+    this.filters = filters;
+    this.pendingLoad?.unsubscribe();
     this.loading.set(true);
     this.error.set(null);
-
-    this.api
-      .getAll<Goal>(RESOURCE)
-      .pipe(
-        catchError(() => of([])),
-        finalize(() => this.loading.set(false)),
-      )
-      .subscribe((goals) => {
-        this.goals.set(
-          goals.length ? goals : this.demoDataStore.getOrCreateList(RESOURCE, createDemoGoal),
-        );
-      });
-  }
-
-  create(weekId: string, draft: GoalDraft): void {
-    const goal: Goal = {
-      id: this.nextId(),
-      weekId,
-      title: draft.title.trim(),
-      expectedResult: draft.expectedResult.trim(),
-      priority: draft.priority,
-      categoryId: draft.categoryId,
-      status: statusForWeek(weekId),
-      deferredCount: 0,
-      createdAt: toDateKey(new Date()),
-      taskLinks: [],
-      habitTarget:
-        draft.habitId && draft.habitTargetCount > 0
-          ? { habitId: draft.habitId, targetCount: draft.habitTargetCount }
-          : undefined,
-    };
-
-    this.api
-      .post<Goal, Omit<Goal, 'id'>>(RESOURCE, withoutId(goal))
-      .pipe(catchError(() => of(goal)))
-      .subscribe((createdGoal) => this.goals.update((items) => [...items, createdGoal]));
-  }
-
-  update(id: number, draft: GoalDraft): void {
-    const goal = this.goals().find((item) => item.id === id);
-    if (!goal) return;
-
-    this.persist({
-      ...goal,
-      title: draft.title.trim(),
-      expectedResult: draft.expectedResult.trim(),
-      priority: draft.priority,
-      categoryId: draft.categoryId,
-      habitTarget:
-        draft.habitId && draft.habitTargetCount > 0
-          ? { habitId: draft.habitId, targetCount: draft.habitTargetCount }
-          : undefined,
+    this.pendingLoad = this.api.get<GoalsBoard>(this.boardPath()).subscribe({
+      next: (board) => {
+        this.board.set(board);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('Não foi possível carregar as metas. Tente novamente.');
+      },
     });
   }
 
-  complete(id: number): void {
-    const goal = this.goals().find((item) => item.id === id);
-    if (!goal) return;
-
-    this.persist({ ...goal, status: 'CONCLUIDA', completedAt: toDateKey(new Date()) });
+  create(request: GoalRequest): Promise<boolean> {
+    return this.mutate(this.api.post<Goal, GoalRequest>('goals', request));
+  }
+  update(id: number, request: GoalRequest): Promise<boolean> {
+    return this.mutate(this.api.put<Goal, GoalRequest>('goals', id, request));
+  }
+  complete(id: number): Promise<boolean> {
+    return this.mutate(this.api.post<Goal, null>('goals/' + id + '/complete', null));
+  }
+  defer(id: number): Promise<boolean> {
+    return this.mutate(this.api.post<Goal, null>('goals/' + id + '/defer', null));
+  }
+  saveFocus(weekId: string, focus: WeeklyFocus): Promise<boolean> {
+    return this.mutate(this.api.put<WeeklyFocus, WeeklyFocus>('goals/focus', weekId, focus));
   }
 
-  defer(id: number, nextWeekId: string): void {
-    const goal = this.goals().find((item) => item.id === id);
-    if (!goal) return;
-
-    this.persist({
-      ...goal,
-      weekId: nextWeekId,
-      status: statusForWeek(nextWeekId),
-      deferredCount: goal.deferredCount + 1,
-      completedAt: undefined,
-    });
+  private boardPath(): string {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(this.filters)) {
+      if (value) query.set(key, value);
+    }
+    return 'goals/board' + (query.size ? '?' + query.toString() : '');
   }
 
-  remove(id: number): void {
-    this.api
-      .delete(RESOURCE, id)
-      .pipe(catchError(() => of(undefined)))
-      .subscribe(() => this.goals.update((items) => items.filter((item) => item.id !== id)));
-  }
-
-  saveFocus(weekId: string, focus: WeeklyFocus): void {
-    this.weeklyFocus.update((current) => ({ ...current, [weekId]: focus }));
-  }
-
-  private persist(goal: Goal): void {
-    this.api
-      .put<Goal, Omit<Goal, 'id'>>(RESOURCE, goal.id, withoutId(goal))
-      .pipe(catchError(() => of(goal)))
-      .subscribe((updatedGoal) =>
-        this.goals.update((items) =>
-          items.map((item) => (item.id === updatedGoal.id ? updatedGoal : item)),
-        ),
+  private async mutate(request: Observable<unknown>): Promise<boolean> {
+    if (this.saving()) return false;
+    this.saving.set(true);
+    this.error.set(null);
+    try {
+      await firstValueFrom(request);
+    } catch (failure) {
+      this.error.set(
+        failure instanceof HttpErrorResponse && typeof failure.error?.message === 'string'
+          ? failure.error.message
+          : 'Não foi possível salvar. Tente novamente.',
       );
-  }
-
-  private nextId(): number {
-    return Math.max(0, ...this.goals().map((goal) => goal.id)) + 1;
+      this.saving.set(false);
+      return false;
+    }
+    // Reload the server's summary, filters and actions after every successful command.
+    // A reload failure must not suggest that a successful POST should be repeated.
+    this.saving.set(false);
+    this.load();
+    return true;
   }
 }

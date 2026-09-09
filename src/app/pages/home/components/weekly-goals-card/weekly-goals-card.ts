@@ -1,23 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { WeeklyGoalCategory, WeeklyGoalPriority } from '../../models/weekly-goal';
+import { GOAL_CATEGORY_LABELS, GOAL_PRIORITY_LABELS } from '../../../../shared/goals/goal.labels';
 import { WeeklyGoalsService } from '../../service/weekly-goals.service';
-
-const PRIORITY_LABELS: Record<WeeklyGoalPriority, string> = {
-  LOW: 'Baixa',
-  NORMAL: 'Normal',
-  HIGH: 'Alta',
-};
-
-const CATEGORY_LABELS: Record<WeeklyGoalCategory, string> = {
-  WORK: 'Trabalho',
-  STUDY: 'Estudo',
-  HEALTH: 'Saúde',
-  MIND: 'Mente',
-  WELLBEING: 'Bem-estar',
-  PERSONAL: 'Pessoal',
-  PROJECT: 'Projeto',
-};
 
 @Component({
   selector: 'app-weekly-goals-card',
@@ -33,8 +17,8 @@ export class WeeklyGoalsCard implements OnInit {
   readonly goals = this.weeklyGoalsService.goals;
   readonly loading = this.weeklyGoalsService.loading;
   readonly error = this.weeklyGoalsService.error;
-  readonly priorityLabels = PRIORITY_LABELS;
-  readonly categoryLabels = CATEGORY_LABELS;
+  readonly priorityLabels = GOAL_PRIORITY_LABELS;
+  readonly categoryLabels = GOAL_CATEGORY_LABELS;
 
   ngOnInit(): void {
     this.loadGoals();

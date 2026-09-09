@@ -2,19 +2,18 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { GoalApiResponse } from '../../../../core/data-access/goals-api';
+import { GoalRequest } from '../../../../shared/goals/goal.models';
 import { WeeklyGoalsCard } from './weekly-goals-card';
 
-const WEEKLY_GOALS_URL = 'http://localhost:8080/goals';
+const WEEKLY_GOALS_URL = 'http://localhost:8080/goals/board';
 
-const WEEKLY_GOALS: GoalApiResponse[] = [
+const WEEKLY_GOALS: (GoalRequest & { id: number })[] = [
   {
     id: 1,
     name: 'Estudar Java',
     expectedTarget: 'Concluir cinco aulas.',
     priority: 'HIGH',
     category: 'STUDY',
-    habitId: null,
   },
   {
     id: 2,
@@ -22,7 +21,6 @@ const WEEKLY_GOALS: GoalApiResponse[] = [
     expectedTarget: 'Caminhar três vezes.',
     priority: 'NORMAL',
     category: 'HEALTH',
-    habitId: 20,
   },
 ];
 
@@ -51,7 +49,7 @@ describe('WeeklyGoalsCard', () => {
 
     const request = http.expectOne(WEEKLY_GOALS_URL);
     expect(request.request.method).toBe('GET');
-    request.flush(WEEKLY_GOALS);
+    request.flush({ goals: WEEKLY_GOALS });
     fixture.detectChanges();
 
     expect(element.querySelectorAll('li h3')).toHaveLength(2);
@@ -67,7 +65,7 @@ describe('WeeklyGoalsCard', () => {
   });
 
   it('shows an empty state when no goals are registered', () => {
-    http.expectOne(WEEKLY_GOALS_URL).flush([]);
+    http.expectOne(WEEKLY_GOALS_URL).flush({ goals: [] });
     fixture.detectChanges();
 
     expect(element.textContent).toContain('Nenhuma meta semanal cadastrada.');
@@ -91,7 +89,7 @@ describe('WeeklyGoalsCard', () => {
     fixture.detectChanges();
 
     expect(element.textContent).toContain('Carregando metas semanais...');
-    http.expectOne(WEEKLY_GOALS_URL).flush(WEEKLY_GOALS);
+    http.expectOne(WEEKLY_GOALS_URL).flush({ goals: WEEKLY_GOALS });
     fixture.detectChanges();
 
     expect(element.textContent).toContain('Estudar Java');
@@ -102,7 +100,7 @@ describe('WeeklyGoalsCard', () => {
     fixture.componentInstance.loadGoals();
     fixture.componentInstance.loadGoals();
 
-    http.expectOne(WEEKLY_GOALS_URL).flush([]);
+    http.expectOne(WEEKLY_GOALS_URL).flush({ goals: [] });
   });
 
   it('cancels the pending request when the card is destroyed', () => {

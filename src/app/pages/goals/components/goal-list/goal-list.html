@@ -2,6 +2,7 @@
   @for (goal of goals(); track goal.id) {
     <app-goal-card
       [goal]="goal"
+      [saving]="saving()"
       (edit)="edit.emit($event)"
       (complete)="complete.emit($event)"
       (defer)="defer.emit($event)"
