@@ -14,14 +14,13 @@ import {
   PLANNER_DAY_SLOTS,
   PlannerEvent,
   PlannerEventDraft,
-  PlannerHabit,
   PlannerTask,
   dateKey,
   getPlannerDayAvailability,
   isPlannerTimeSlot,
   startOfDay,
 } from '../../models';
-import { HabitService } from '../../../habits/service/habit.service';
+import { HabitExecutionService } from '../../service/habit-execution.service';
 import { PlannerService } from '../../service/planner.service';
 import { PlannerDayView } from '../planner-day-view/planner-day-view';
 import { PlannerSidebar } from '../planner-sidebar/planner-sidebar';
@@ -42,6 +41,7 @@ function formatDuration(minutes: number): string {
 
 @Component({
   selector: 'app-planning',
+  providers: [HabitExecutionService],
   imports: [
     PlannerDayView,
     PlannerWeekView,
@@ -54,7 +54,8 @@ function formatDuration(minutes: number): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Planning {
-  private readonly habitService = inject(HabitService);
+  private readonly habitExecution = inject(HabitExecutionService);
+  readonly habitError = this.habitExecution.error;
   private readonly plannerService = inject(PlannerService);
 
   readonly selectedDate = input<Date>(startOfDay(new Date()));
@@ -69,17 +70,7 @@ export class Planning {
 
   readonly events = this.plannerService.events;
   readonly unscheduledTasks = this.plannerService.unscheduledTasks;
-  readonly habits = computed<PlannerHabit[]>(() => {
-    const activeDate = dateKey(this.selectedDate());
-    return this.habitService
-      .habits()
-      .filter((habit) => habit.status === 'active')
-      .map((habit) => ({
-        id: habit.id,
-        title: habit.name,
-        completed: habit.completedDates.includes(activeDate),
-      }));
-  });
+  readonly habits = this.habitExecution.habits;
 
   readonly dayEvents = computed(() => {
     const activeDate = dateKey(this.selectedDate());
@@ -105,6 +96,7 @@ export class Planning {
   );
 
   constructor() {
+    effect(() => this.habitExecution.load(dateKey(this.selectedDate())));
     effect(() => {
       if (this.newEventRequest() > 0) {
         this.editingEvent.set(null);
@@ -113,8 +105,10 @@ export class Planning {
     });
   }
 
+  reloadHabits(): void { this.habitExecution.load(dateKey(this.selectedDate())); }
+
   toggleHabit(id: number): void {
-    this.habitService.toggleCompletion(id, dateKey(this.selectedDate()));
+    void this.habitExecution.toggle(id);
   }
 
   createEvent(draft: PlannerEventDraft): void {

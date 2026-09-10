@@ -100,20 +100,6 @@ export class HabitService {
     this.persist({ ...habit, status: habit.status === 'active' ? 'paused' : 'active' });
   }
 
-  toggleCompletion(id: number, date: string): void {
-    const habit = this.habits().find((item) => item.id === id);
-    if (!habit) return;
-
-    const completedDates = new Set(habit.completedDates);
-    if (completedDates.has(date)) {
-      completedDates.delete(date);
-    } else {
-      completedDates.add(date);
-    }
-
-    this.persist({ ...habit, completedDates: [...completedDates].sort() });
-  }
-
   private persist(habit: Habit): void {
     this.api
       .put<Habit, Omit<Habit, 'id'>>(RESOURCE, habit.id, withoutId(habit))

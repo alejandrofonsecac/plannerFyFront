@@ -1,3 +1,8 @@
+@if (habitError(); as message) {
+  <div class="card p-4 text-error" role="alert">{{ message }}
+    <button type="button" class="button button--secondary" (click)="reloadHabits()">Tentar novamente</button>
+  </div>
+}
 <section
   class="planner-layout"
   [class.planner-layout--weekly]="viewMode() === 'weekly'"
