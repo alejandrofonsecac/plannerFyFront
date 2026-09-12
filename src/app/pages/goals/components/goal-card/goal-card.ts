@@ -1,11 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { Goal } from '../../../../shared/goals/goal.models';
-import {
-  GOAL_CATEGORY_LABELS,
-  GOAL_PRIORITY_LABELS,
-  GOAL_STATUS_LABELS,
-} from '../../../../shared/goals/goal.labels';
+import { GOAL_CATEGORY_LABELS, GOAL_PRIORITY_LABELS, GOAL_STATUS_LABELS } from '../../../../shared/goals/goal.labels';
 @Component({
   selector: 'app-goal-card',
   imports: [MatIconModule],

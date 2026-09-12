@@ -1,0 +1,94 @@
+<style>
+  #planner-preview { --pf-bg: light-dark(#f7f7f5,#141414); --pf-surface: light-dark(#fff,#222); --pf-text: light-dark(#1a1a1a,#f5f5f5); --pf-sub: light-dark(#5b5b58,#c8c8c8); --pf-line: light-dark(#d6d6d0,#3a3a3a); --pf-blue: light-dark(#2563eb,#4f8ef7); --pf-track: light-dark(#e7e7e2,#2d2d2d); color:var(--pf-text); font:14px/1.5 Inter,system-ui,sans-serif; }
+  #planner-preview * { box-sizing:border-box; }
+  #planner-preview .pf-screen { background:var(--pf-bg); border:1px solid var(--pf-line); border-radius:18px; padding:18px; max-width:430px; margin:auto; }
+  #planner-preview header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  #planner-preview h2 { font-size:18px; margin:0; color:var(--pf-text); }
+  #planner-preview label { display:grid; gap:6px; color:var(--pf-sub); }
+  #planner-preview select { background:var(--pf-surface); color:var(--pf-text); font:inherit; border:1px solid var(--pf-line); border-radius:10px; padding:10px; width:100%; }
+  #planner-preview button { background:var(--pf-surface); color:var(--pf-text); border:1px solid var(--pf-line); border-radius:8px; font:inherit; cursor:pointer; padding:8px; min-height:44px; }
+  #planner-preview .pf-day { text-align:center; color:var(--pf-sub); margin:16px 0 8px; }
+  #planner-preview .pf-periods { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin:12px 0; }
+  #planner-preview button[aria-pressed=true] { border-color:var(--pf-blue); color:var(--pf-blue); }
+  #planner-preview .pf-list { border-top:1px solid var(--pf-line); }
+  #planner-preview .pf-row { display:grid; grid-template-columns:48px minmax(0,1fr); border-bottom:1px solid var(--pf-line); align-items:center; gap:10px; padding:6px 0; }
+  #planner-preview .pf-row time { color:var(--pf-sub); font-size:12px; }
+  #planner-preview .pf-free { color:var(--pf-sub); border:0; background:none; text-align:left; padding:0; }
+  #planner-preview .pf-event { background:var(--pf-surface); border-left:3px solid var(--pf-blue); padding:12px; text-align:left; }
+  #planner-preview .pf-event span { display:block; font-size:12px; color:var(--pf-sub); }
+  #planner-preview .pf-dial { position:relative; aspect-ratio:1; width:min(100%,var(--pf-diameter,340px)); margin:auto; }
+  #planner-preview .pf-dial svg { width:100%; height:100%; display:block; }
+  #planner-preview .pf-track { fill:none; stroke:var(--pf-track); stroke-width:14; }
+  #planner-preview .pf-arc { fill:none; stroke:var(--pf-blue); stroke-width:14; stroke-linecap:round; }
+  #planner-preview .pf-tick { fill:var(--pf-sub); font-size:13px; text-anchor:middle; dominant-baseline:middle; }
+  #planner-preview .pf-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
+  #planner-preview .pf-center strong { display:block; font-size:32px; font-weight:500; }
+  #planner-preview .pf-center span { font-size:12px; color:var(--pf-sub); white-space:nowrap; }
+  #planner-preview .pf-arc-button { position:absolute; width:38px; height:38px; min-height:38px; border:0; background:transparent; transform:translate(-50%,-50%); padding:0; font-size:12px; }
+  #planner-preview .pf-details { background:var(--pf-surface); border:1px solid var(--pf-line); border-radius:14px; padding:14px; margin-top:12px; }
+  #planner-preview .pf-details header { margin-bottom:8px; }
+  #planner-preview .pf-details p { margin:6px 0; }
+  #planner-preview .pf-tray { border-top:1px solid var(--pf-line); margin-top:16px; padding-top:12px; }
+  #planner-preview .pf-tray small { color:var(--pf-sub); }
+  #planner-preview .pf-tray button { display:block; width:100%; text-align:left; margin-top:8px; }
+  #planner-preview [hidden] { display:none!important; }
+</style>
+<div id="planner-preview">
+  <section class="pf-screen" aria-label="Prévia das visualizações do PlannerFy">
+    <header><h2>Planner</h2><span>Prévia</span></header>
+    <label>Visualização
+      <select id="pf-mode"><option value="compact">Compacta · padrão</option><option value="periods">Por período</option><option value="radial" selected>Circular</option></select>
+    </label>
+    <div class="pf-day">Quinta-feira, 10 de setembro</div>
+    <nav class="pf-periods" aria-label="Período" hidden></nav>
+    <div class="pf-content"></div>
+    <section class="pf-details" aria-live="polite" hidden></section>
+    <footer class="pf-tray"><strong>Não planejadas</strong><small> · 1 tarefa</small><button type="button" id="pf-task">Ler um capítulo · escolher horário</button></footer>
+  </section>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('planner-preview');
+  const content = root.querySelector('.pf-content');
+  const details = root.querySelector('.pf-details');
+  const periodNav = root.querySelector('.pf-periods');
+  const mode = root.querySelector('#pf-mode');
+  const state = { diameter:340, period:1 };
+  const periods = [{label:'Madrugada',start:0,end:7},{label:'Manhã',start:7,end:13},{label:'Tarde',start:13,end:19},{label:'Noite',start:19,end:24}];
+  const events = [{title:'Reunião de equipe',start:9,end:10},{title:'Ligação rápida',start:9.5,end:9.75},{title:'Estudar',start:14,end:15},{title:'Revisar o dia',start:20,end:20.25}];
+  const time = value => String(Math.floor(value)).padStart(2,'0') + ':' + String(Math.round(value%1*60)).padStart(2,'0');
+  const point = (angle,radius=132) => ({x:170+radius*Math.cos((angle-90)*Math.PI/180),y:170+radius*Math.sin((angle-90)*Math.PI/180)});
+  const arc = (start,end) => { const sweep=Math.max(8,(end-start)*15),a=point(start*15),b=point(start*15+sweep);return 'M '+a.x+' '+a.y+' A 132 132 0 '+(sweep>180?1:0)+' 1 '+b.x+' '+b.y; };
+  function showDetails(items) {
+    details.hidden=false;
+    details.innerHTML='<header><strong>Compromissos</strong><button type="button" aria-label="Fechar detalhes">×</button></header>'+items.map(item=>'<p><strong>'+item.title+'</strong><br>'+time(item.start)+' – '+time(item.end)+'</p>').join('');
+    details.querySelector('button').onclick=()=>{details.hidden=true;};
+  }
+  function render() {
+    root.style.setProperty('--pf-diameter',state.diameter+'px');
+    details.hidden=true;
+    periodNav.hidden=mode.value!=='periods';
+    periodNav.innerHTML=periods.map((p,i)=>'<button type="button" data-period="'+i+'" aria-pressed="'+(i===state.period)+'">'+p.label+'</button>').join('');
+    periodNav.querySelectorAll('button').forEach(button=>button.onclick=()=>{state.period=Number(button.dataset.period);render();});
+    if(mode.value==='radial') {
+      const groups=[[events[0],events[1]],[events[2]],[events[3]]];
+      content.innerHTML='<div class="pf-dial"><svg viewBox="0 0 340 340" role="img" aria-label="Dia inteiro em 24 horas; compromissos às 9h, 14h e 20h"><circle class="pf-track" cx="170" cy="170" r="132"/>'+Array.from({length:8},(_,i)=>{const p=point(i*45,157);return '<text class="pf-tick" x="'+p.x+'" y="'+p.y+'">'+String(i*3).padStart(2,'0')+'</text>';}).join('')+groups.map(group=>'<path class="pf-arc" d="'+arc(group[0].start,group[0].end)+'"/>').join('')+'</svg><div class="pf-center"><strong>12:00</strong><span>Hora local · 24 horas</span></div>'+groups.map((group,i)=>{const p=point((group[0].start+group[0].end)*7.5);return '<button class="pf-arc-button" type="button" data-group="'+i+'" aria-label="Ver '+group[0].title+'" style="left:'+p.x/3.4+'%;top:'+p.y/3.4+'%">'+(group.length>1?'+1':'')+'</button>';}).join('')+'</div>';
+      content.querySelectorAll('[data-group]').forEach(button=>button.onclick=()=>showDetails(groups[Number(button.dataset.group)]));
+    } else {
+      const period=mode.value==='periods'?periods[state.period]:{start:0,end:24};
+      content.innerHTML='<div class="pf-list">'+Array.from({length:period.end-period.start},(_,index)=>{const hour=period.start+index,items=events.filter(e=>e.start<hour+1&&e.end>hour);return '<div class="pf-row"><time>'+time(hour)+'</time><button type="button" class="'+(items.length?'pf-event':'pf-free')+'" data-hour="'+hour+'">'+(items.length?items.map(item=>item.title+'<span>'+time(item.start)+' – '+time(item.end)+'</span>').join(''):'Livre +')+'</button></div>';}).join('')+'</div>';
+      content.querySelectorAll('[data-hour]').forEach(button=>button.onclick=()=>{const hour=Number(button.dataset.hour),items=events.filter(e=>e.start<hour+1&&e.end>hour);if(items.length)showDetails(items);else {const expanded=button.getAttribute('aria-expanded')==='true';button.setAttribute('aria-expanded',String(!expanded));button.style.minHeight=expanded?'44px':'88px';}});
+    }
+  }
+  mode.onchange=render;
+  root.querySelector('#pf-task').onclick=()=>{
+    details.hidden=false;
+    details.innerHTML='<label>Agendar: Ler um capítulo<select aria-label="Horário">'+Array.from({length:24},(_,hour)=>'<option>'+time(hour)+' – '+time(hour+1)+'</option>').join('')+'</select></label>';
+  };
+  render();
+  if(globalThis.Tweak) {
+    const tweak=new Tweak({container:root.querySelector('.pf-screen'),onChange:render});
+    tweak.addSlider(state,'diameter',{label:'Diâmetro máximo',min:280,max:340,step:10,unit:'px'});
+  }
+})();
+</script>

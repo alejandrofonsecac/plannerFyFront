@@ -11,8 +11,9 @@ import { catchError, of } from 'rxjs';
 import { CalendarEventForm } from './components/calendar-event-form/calendar-event-form';
 import { CalendarEvent, CalendarEventDraft } from './models';
 import { CalendarEventService } from './service/calendar-event.service';
-import { TasksService } from '../schedule/components/tasks/service/tasks.service';
-import { Task, TaskPriority } from '../schedule/models';
+import { TasksService } from '@pages/schedule/services/tasks.service';
+import type { Task } from '@pages/schedule/models';
+import { TaskPriority } from '@pages/schedule/models';
 import {
   addDays,
   addMonths,
@@ -107,7 +108,9 @@ export class Calendar implements OnInit {
           return of<Task[]>([]);
         }),
       )
-      .subscribe((tasks) => this.taskEvents.set(tasks.flatMap((task) => this.taskToCalendarEvent(task))));
+      .subscribe((tasks) =>
+        this.taskEvents.set(tasks.flatMap((task) => this.taskToCalendarEvent(task))),
+      );
   }
 
   previousPeriod(): void {

@@ -1,10 +1,10 @@
 import { Component, OnInit, computed, effect, inject, input, signal, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { catchError, of } from 'rxjs';
-import { DemoDataStore } from '../../../../core/data-access/demo-data-store.service';
-import { LayoutTier, Task, TaskPriority } from '../../models';
-import { TasksProperties } from './tasks-properties/tasks-properties';
-import { TasksService } from './service/tasks.service';
+import { DemoDataStore } from '@app/core/data-access/demo-data-store.service';
+import { type LayoutTier, type Task, TaskPriority } from '@pages/schedule/models';
+import { TaskForm } from './task-form/task-form';
+import { TasksService } from '@pages/schedule/services/tasks.service';
 
 const PRIORITY_CLASSES: Record<TaskPriority, string> = {
   [TaskPriority.ALTA]: 'bg-error/10 text-error',
@@ -44,7 +44,7 @@ const TIER_ICON_CLASSES: Record<LayoutTier, string> = {
 
 @Component({
   selector: 'app-tasks',
-  imports: [MatIconModule, TasksProperties],
+  imports: [MatIconModule, TaskForm],
   templateUrl: './tasks.html',
   styleUrl: './tasks.css',
 })

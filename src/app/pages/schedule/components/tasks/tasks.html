@@ -1,10 +1,10 @@
 <section>
   <div class="min-w-0">
     @if (showNewTaskDialog()) {
-      <app-tasks-properties
+      <app-task-form
         (closeForm)="closeNewTaskDialog()"
         (saveForm)="addTask($event)"
-      ></app-tasks-properties>
+      ></app-task-form>
     }
 
     @if (tasks().length === 0) {

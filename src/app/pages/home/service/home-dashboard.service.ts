@@ -4,15 +4,10 @@ import { ApiClient } from '../../../core/data-access/api-client.service';
 import { CalendarEvent } from '../../calendar/models';
 import { Habit } from '../../habits/models/habit';
 import { calculateHabitSummary } from '../../habits/utils/habit-metrics';
-import {
-  PlannerDayAvailability,
-  PlannerEvent,
-  PLANNER_SLOT_COUNT,
-  Task,
-  dateKey,
-  getPlannerDayAvailability,
-} from '../../schedule/models';
-import { SCHEDULE_TASKS_LIST_RESOURCE } from '../../schedule/service/schedule-tasks.endpoints';
+import type { PlannerDayAvailability, PlannerEvent, Task } from '@pages/schedule/models';
+import { PLANNER_SLOT_COUNT } from '@pages/schedule/constants';
+import { dateKey, getPlannerDayAvailability } from '@pages/schedule/utils';
+import { SCHEDULE_TASKS_LIST_RESOURCE } from '@pages/schedule/services/schedule-tasks.endpoints';
 import { WeatherResponse } from '../models/weather';
 import { WeatherService } from './weather/weatherService.service';
 

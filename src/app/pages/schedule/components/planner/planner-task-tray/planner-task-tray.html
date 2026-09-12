@@ -1,0 +1,44 @@
+<div class="planner-task-tray" [attr.aria-busy]="busy()">
+  @if (selectedTask(); as task) {
+    <form class="planner-task-scheduler" (submit)="$event.preventDefault(); schedule()">
+      <label class="form-field"
+        >Agendar: {{ task.title }}
+        <select
+          class="input-control"
+          [value]="selectedTime()"
+          [disabled]="busy()"
+          (change)="chooseTime($event)"
+        >
+          @for (slot of availability().slots; track slot.startTime) {
+            <option [value]="slot.startTime" [disabled]="!slot.available">
+              {{ slot.startTime }} – {{ slot.endTime }}{{ slot.available ? '' : ' · Ocupado' }}
+            </option>
+          }
+        </select>
+      </label>
+      <div class="planner-task-scheduler__actions">
+        <button type="submit" class="button button--primary" [disabled]="!canSchedule()">
+          {{ busy() ? 'Salvando…' : 'Agendar' }}
+        </button>
+        <button
+          type="button"
+          class="button button--ghost"
+          [disabled]="busy()"
+          (click)="selectedTaskChange.emit(null)"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+  }
+  <p class="planner-task-message" role="status">{{ message() }}</p>
+  <app-planner-unscheduled-tasks
+    [tasks]="tasks()"
+    [connectedDropListIds]="connectedDropListIds()"
+    [dragEnabled]="!busy()"
+    [selectedTaskId]="selectedTask()?.id ?? null"
+    (taskSelected)="selectTask($event)"
+    (dragMoved)="dragMoved.emit($event)"
+    (dragEnded)="dragEnded.emit()"
+  />
+</div>

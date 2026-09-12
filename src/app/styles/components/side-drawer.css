@@ -59,10 +59,6 @@
   color: var(--color-error);
 }
 
-.side-drawer select.input-control {
-  background-color: var(--color-card-surface);
-}
-
 .side-drawer__optional,
 .side-drawer__hint {
   color: var(--color-text-disabled);

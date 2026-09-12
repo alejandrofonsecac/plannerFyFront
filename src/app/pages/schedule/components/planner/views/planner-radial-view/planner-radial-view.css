@@ -1,0 +1,181 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.radial-view {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+.radial-view__header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  max-width: 380px;
+  width: 100%;
+}
+.radial-view__header h2 {
+  color: var(--color-text-main);
+  font-size: 16px;
+  margin: 0;
+  text-transform: capitalize;
+}
+.radial-view__header button {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 24px;
+}
+.radial-dial {
+  aspect-ratio: 1;
+  position: relative;
+  touch-action: pan-y;
+  width: min(100%, calc(100vw - 40px), 340px);
+}
+.radial-dial svg {
+  display: block;
+  height: 100%;
+  width: 100%;
+  overflow: visible;
+}
+.radial-track {
+  fill: none;
+  stroke: var(--color-surface-elevated);
+  stroke-width: 14;
+}
+.radial-tick {
+  stroke: var(--color-text-sub);
+  stroke-width: 1;
+}
+.radial-label {
+  fill: var(--color-text-sub);
+  font-size: 13px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+.radial-event {
+  cursor: pointer;
+}
+.radial-event__arc {
+  fill: none;
+  stroke: var(--color-brand-primary);
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.radial-event__hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 28;
+  vector-effect: non-scaling-stroke;
+  pointer-events: stroke;
+}
+.radial-event:focus-visible {
+  outline: none;
+}
+.radial-event:hover .radial-event__arc,
+.radial-event:focus-visible .radial-event__arc {
+  stroke: var(--color-brand-accent);
+  stroke-width: 18;
+}
+.radial-event__badge {
+  fill: var(--color-text-main);
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+.radial-preview {
+  fill: none;
+  stroke: var(--color-brand-accent);
+  stroke-width: 20;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.radial-now {
+  fill: var(--color-error);
+}
+.radial-center {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  left: 50%;
+  max-width: 58%;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.radial-center strong {
+  color: var(--color-text-main);
+  font-size: clamp(28px, 8vw, 40px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.radial-center span,
+.radial-view__hint {
+  color: var(--color-text-sub);
+  font-size: 12px;
+}
+.radial-view__hint {
+  margin: 0;
+  max-width: 340px;
+  padding: 0 12px;
+  text-align: center;
+}
+.radial-dial .cdk-drag-placeholder {
+  display: none;
+}
+.radial-sheet {
+  background: var(--color-card-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px 20px 0 0;
+  color: var(--color-text-main);
+  inset: auto 0 0;
+  margin: auto auto 0;
+  max-height: 70dvh;
+  max-width: 520px;
+  padding: 20px 24px max(24px, env(safe-area-inset-bottom));
+  width: 100%;
+}
+.radial-sheet::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+.radial-sheet header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.radial-sheet h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.radial-sheet article {
+  border-top: 1px solid var(--color-border);
+  margin-top: 16px;
+  padding-top: 16px;
+  overflow-wrap: anywhere;
+}
+.radial-sheet h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.radial-sheet p {
+  color: var(--color-text-sub);
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .radial-sheet[open] {
+    animation: sheet-in 180ms ease-out;
+  }
+  @keyframes sheet-in {
+    from {
+      transform: translateY(40px);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+}

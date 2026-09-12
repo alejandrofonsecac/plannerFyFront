@@ -1,12 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import {
-  CalendarEvent,
-  CalendarEventCategory,
-  CalendarEventDraft,
-  CalendarEventSource,
-} from '../../models';
+import { CalendarEvent, CalendarEventCategory, CalendarEventDraft, CalendarEventSource } from '../../models';
 
 interface EventFormDraft {
   title: string;
