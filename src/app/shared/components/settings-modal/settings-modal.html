@@ -16,7 +16,13 @@
   >
     <header class="settings-modal__header">
       <h2 id="settings-modal-title">Configurações</h2>
-      <button #closeButton type="button" class="settings-modal__close" (click)="close()" aria-label="Fechar">
+      <button
+        #closeButton
+        type="button"
+        class="settings-modal__close"
+        (click)="close()"
+        aria-label="Fechar"
+      >
         <mat-icon aria-hidden="true">close</mat-icon>
       </button>
     </header>
@@ -35,7 +41,8 @@
           (click)="setTab(tab.id)"
           (keydown)="onTabKeydown($event, index)"
         >
-          <mat-icon aria-hidden="true">{{ tab.icon }}</mat-icon>{{ tab.label }}
+          <mat-icon aria-hidden="true">{{ tab.icon }}</mat-icon
+          >{{ tab.label }}
         </button>
       }
     </div>
@@ -64,7 +71,10 @@
                 (click)="setTheme(option.id)"
                 (keydown)="onThemeOptionKeydown($event, index)"
               >
-                <span [class]="'settings-theme-preview settings-theme-preview--' + option.id" aria-hidden="true">
+                <span
+                  [class]="'settings-theme-preview settings-theme-preview--' + option.id"
+                  aria-hidden="true"
+                >
                   <i></i><span></span><span></span>
                 </span>
                 <span class="settings-theme-option__label">
@@ -79,7 +89,10 @@
           </div>
         </section>
 
-        <section class="settings-section settings-section--accent" aria-labelledby="settings-accent-title">
+        <section
+          class="settings-section settings-section--accent"
+          aria-labelledby="settings-accent-title"
+        >
           <header class="settings-section__header">
             <h3 id="settings-accent-title">Cor de destaque</h3>
             <p>Usada em botões, links e elementos de destaque.</p>
@@ -104,6 +117,52 @@
               </button>
             }
           </div>
+        </section>
+      } @else if (activeTab() === 'visualization') {
+        <section class="settings-section" aria-labelledby="settings-planner-title">
+          <header class="settings-section__header">
+            <h3 id="settings-planner-title">Planner</h3>
+            <p>Escolha a visualização diária. Sua preferência é salva neste dispositivo.</p>
+          </header>
+          <fieldset class="planner-display-options">
+            <legend>Forma de visualização</legend>
+            @for (option of plannerView.options; track option.id) {
+              <label class="planner-display-option">
+                <input
+                  type="radio"
+                  name="planner-display"
+                  [value]="option.id"
+                  [checked]="plannerView.display() === option.id"
+                  (change)="plannerView.setDisplay(option.id)"
+                />
+                <span
+                  ><strong>{{ option.label }}</strong
+                  ><small>{{ option.description }}</small></span
+                >
+                <span
+                  class="planner-display-preview"
+                  role="tooltip"
+                  [attr.aria-label]="'Prévia: ' + option.label"
+                >
+                  <strong>{{ option.label }}</strong>
+                  @if (option.id === 'radial') {
+                    <span class="planner-display-preview__clock"><span>12:00</span></span>
+                    <span class="planner-display-preview__tray">Tarefas não planejadas</span>
+                  } @else {
+                    @if (option.id === 'periods') {
+                      <span class="planner-display-preview__period"
+                        >Madrugada · <b>Manhã</b> · Tarde · Noite</span
+                      >
+                    }
+                    <span class="planner-display-preview__free">08:00 · Livre</span>
+                    <span class="planner-display-preview__event">09:00 · Reunião</span>
+                    <span class="planner-display-preview__free">10:00 · Livre</span>
+                    <span class="planner-display-preview__event">11:00 · Estudar</span>
+                  }
+                </span>
+              </label>
+            }
+          </fieldset>
         </section>
       } @else {
         <section class="settings-placeholder">

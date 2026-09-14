@@ -2,13 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, firstValueFrom, Subscription } from 'rxjs';
 import { ApiClient } from '../../../core/data-access/api-client.service';
-import {
-  Goal,
-  GoalRequest,
-  GoalFilters,
-  GoalsBoard,
-  WeeklyFocus,
-} from '../../../shared/goals/goal.models';
+import { Goal, GoalRequest, GoalFilters, GoalsBoard, WeeklyFocus } from '../../../shared/goals/goal.models';
 
 @Injectable({ providedIn: 'root' })
 export class GoalService {

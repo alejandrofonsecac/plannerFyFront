@@ -1,17 +1,24 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Planning } from './components/planning/planning';
+import { Planning } from './components/planner/planning';
 import { Tasks } from './components/tasks/tasks';
-import { Header, PlannerContent, PlannerViewMode } from './components/header/header';
-import { startOfDay } from './models/planner.utils';
-import { LayoutTier } from './models';
-import { SidebarState } from '../../shared/components/sidebar/sidebar-state';
+import { ScheduleHeader } from './components/schedule-header/schedule-header';
+import type { PlannerContent, PlannerViewMode, LayoutTier } from './models';
+import { startOfDay } from './utils';
+import { SidebarState } from '@app/shared/components/sidebar/sidebar-state';
 
 type ScheduleView = 'planejamento' | 'tarefas';
 
 @Component({
   selector: 'app-schedule',
-  imports: [Planning, Tasks, Header],
+  imports: [Planning, Tasks, ScheduleHeader],
   templateUrl: './schedule.html',
   styleUrl: './schedule.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

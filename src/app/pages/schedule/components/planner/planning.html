@@ -1,0 +1,119 @@
+@if (habitError(); as message) {
+  <div class="card p-4 text-error" role="alert">
+    {{ message }}
+    <button type="button" class="button button--secondary" (click)="reloadHabits()">
+      Tentar novamente
+    </button>
+  </div>
+}
+<section
+  class="planner-layout"
+  [class.planner-layout--weekly]="viewMode() === 'weekly'"
+  [class.planner-layout--radial]="viewMode() === 'daily' && preferences.display() === 'radial'"
+  aria-label="Planejador"
+>
+  <div class="planner-layout__timeline">
+    @if (viewMode() === 'daily') {
+      @if (preferences.display() === 'radial') {
+        <app-planner-radial-view
+          [date]="selectedDate()"
+          [events]="summary().events"
+          [selectingTask]="!!selectedTask()"
+          (taskDropped)="onTaskDropped($event.event, $event.slotTime)"
+          (slotSelected)="scheduleSelectedTask($event)"
+          (dayChanged)="changeDay($event)"
+          (eventEdited)="openEventEditor($event)"
+        />
+      } @else {
+        <app-planner-day-view
+          [date]="selectedDate()"
+          [events]="summary().events"
+          [dragEnabled]="dragAndDropEnabled()"
+          [selectingTask]="!!selectedTask()"
+          (slotSelected)="scheduleSelectedTask($event)"
+          (taskDropped)="onTaskDropped($event.event, $event.slotTime)"
+          (eventRemoved)="removeEvent($event)"
+          (eventEdited)="openEventEditor($event)"
+        />
+      }
+    } @else {
+      <app-planner-week-view
+        [date]="selectedDate()"
+        [events]="events()"
+        (eventRemoved)="removeEvent($event)"
+        (eventEdited)="openEventEditor($event)"
+      />
+    }
+  </div>
+
+  @if (viewMode() === 'daily') {
+    <aside class="planner-layout__daily-aside" aria-label="Painel lateral do planejador">
+      <app-planner-task-tray
+        [tasks]="unscheduledTasks()"
+        [availability]="summary().availability"
+        [selectedTask]="selectedTask()"
+        (selectedTaskChange)="selectedTask.set($event)"
+        [connectedDropListIds]="dailyDropListIds()"
+        [busy]="scheduling.busy()"
+        [message]="taskMessage()"
+        (scheduleRequested)="scheduleTask($event.task, $event.time)"
+        (dragMoved)="radialView()?.dragMoved($event)"
+        (dragEnded)="endTaskDrag()"
+      />
+
+      <app-planner-sidebar
+        [date]="selectedDate()"
+        [events]="summary().events"
+        [taskCount]="summary().taskCount"
+        [eventCount]="summary().eventCount"
+        [habits]="habits()"
+        [plannedHours]="summary().plannedHours"
+        [freeTime]="summary().freeTime"
+        [freeTimePercentage]="summary().freeTimePercentage"
+        (habitToggled)="toggleHabit($event)"
+      />
+    </aside>
+  } @else {
+    <app-planner-sidebar
+      [date]="selectedDate()"
+      [events]="summary().events"
+      [taskCount]="summary().taskCount"
+      [eventCount]="summary().eventCount"
+      [habits]="habits()"
+      [plannedHours]="summary().plannedHours"
+      [freeTime]="summary().freeTime"
+      [freeTimePercentage]="summary().freeTimePercentage"
+      (habitToggled)="toggleHabit($event)"
+    />
+  }
+
+  <app-planner-event-form
+    [open]="eventFormOpen()"
+    [saving]="scheduling.busy()"
+    [date]="selectedDate()"
+    [event]="editingEvent()"
+    (cancelled)="closeEventForm()"
+    (created)="createEvent($event)"
+    (updated)="updateEvent($event)"
+    (removed)="removeEvent($event)"
+  />
+
+  @if (operationError(); as message) {
+    <div class="planner-operation-error card" role="alert">
+      <p>{{ message }}</p>
+      @if (cleanupTaskId() !== null) {
+        <button
+          type="button"
+          class="button button--secondary"
+          [disabled]="scheduling.busy()"
+          (click)="retryCleanup()"
+        >
+          Concluir agendamento
+        </button>
+      }
+      <button type="button" class="button button--ghost" (click)="operationError.set('')">
+        Fechar aviso
+      </button>
+    </div>
+  }
+</section>

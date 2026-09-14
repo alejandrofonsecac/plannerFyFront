@@ -46,7 +46,7 @@ export class HabitService {
         this.habits.set(
           habits.length ? habits : this.demoDataStore.getOrCreateList(RESOURCE, createDemoHabit),
         );
-      });
+      }); 
   }
 
   create(draft: HabitDraft): void {

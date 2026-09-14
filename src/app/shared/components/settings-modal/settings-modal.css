@@ -2,6 +2,133 @@
   display: block;
 }
 
+.planner-display-options {
+  border: 0;
+  display: grid;
+  gap: 12px;
+  margin: 24px 0 0;
+  min-width: 0;
+  padding: 0;
+}
+.planner-display-options legend {
+  color: var(--color-text-sub);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.planner-display-option {
+  align-items: center;
+  background: var(--color-bg-main);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  min-height: 70px;
+  padding: 14px;
+  position: relative;
+}
+.planner-display-option:has(input:checked) {
+  border-color: var(--color-brand-primary);
+}
+.planner-display-option input {
+  accent-color: var(--color-brand-primary);
+  height: 20px;
+  width: 20px;
+  flex: none;
+}
+.planner-display-option strong {
+  color: var(--color-text-main);
+  display: block;
+  font-size: 14px;
+}
+.planner-display-option small {
+  color: var(--color-text-sub);
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.planner-display-preview {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 768px) {
+  .planner-display-option {
+    margin-right: 290px;
+  }
+  .planner-display-option:hover .planner-display-preview,
+  .planner-display-option:focus-within .planner-display-preview {
+    display: grid;
+  }
+  .planner-display-preview {
+    background: var(--color-card-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.2);
+    cursor: default;
+    gap: 8px;
+    left: calc(100% + 16px);
+    padding: 16px;
+    position: absolute;
+    top: 0;
+    width: 264px;
+    z-index: 2;
+  }
+  .planner-display-option:last-child .planner-display-preview {
+    bottom: 0;
+    top: auto;
+  }
+  .planner-display-preview__free {
+    color: var(--color-text-sub);
+    font-size: 12px;
+    border-bottom: 1px solid var(--color-border);
+    padding: 4px;
+  }
+  .planner-display-preview__event {
+    background: var(--color-bg-main);
+    border-left: 3px solid var(--color-brand-primary);
+    color: var(--color-text-main);
+    font-size: 12px;
+    padding: 14px 8px;
+  }
+  .planner-display-preview__period {
+    color: var(--color-text-sub);
+    font-size: 11px;
+  }
+  .planner-display-preview__period b {
+    color: var(--color-brand-primary);
+  }
+  .planner-display-preview__clock {
+    align-items: center;
+    aspect-ratio: 1;
+    background: conic-gradient(
+      var(--color-surface-elevated) 0 90deg,
+      var(--color-brand-primary) 90deg 115deg,
+      var(--color-surface-elevated) 115deg 220deg,
+      var(--color-brand-primary) 220deg 255deg,
+      var(--color-surface-elevated) 255deg
+    );
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    margin: 0 auto;
+    width: 140px;
+  }
+  .planner-display-preview__clock > span {
+    align-items: center;
+    background: var(--color-card-surface);
+    border-radius: 50%;
+    color: var(--color-text-main);
+    display: flex;
+    height: 116px;
+    justify-content: center;
+    width: 116px;
+  }
+  .planner-display-preview__tray {
+    color: var(--color-text-sub);
+    font-size: 11px;
+    text-align: center;
+  }
+}
+
 .settings-modal-backdrop {
   background: color-mix(in srgb, var(--color-text-main) 48%, transparent);
   border: 0;
@@ -289,7 +416,9 @@
 }
 
 .settings-accent-option--selected {
-  box-shadow: 0 0 0 3px var(--color-card-surface), 0 0 0 5px var(--color-brand-primary);
+  box-shadow:
+    0 0 0 3px var(--color-card-surface),
+    0 0 0 5px var(--color-brand-primary);
 }
 
 .settings-accent-option mat-icon {

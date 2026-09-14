@@ -16,7 +16,7 @@
 }
 
 .input-control {
-  background: transparent;
+  background: var(--color-card-surface);
   border: 0;
   color: var(--color-text-main);
   font: inherit;
@@ -25,7 +25,17 @@
   width: 100%;
 }
 
-.input-shell .input-control { padding: 13.6px 0; }
+.input-shell .input-control {
+  background: transparent;
+  padding: 13.6px 0;
+}
+
+/* Native dropdown menus need their own themed surface and text colors. */
+select option,
+select optgroup {
+  background: var(--color-card-surface);
+  color: var(--color-text-main);
+}
 
 .form-field {
   color: var(--color-text-sub);

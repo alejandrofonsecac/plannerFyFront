@@ -1,0 +1,61 @@
+<section class="planner-unscheduled-tasks card" aria-labelledby="unscheduled-title">
+  <header class="planner-unscheduled-tasks__header">
+    <div>
+      <h2 id="unscheduled-title">Não planejadas</h2>
+      <p>Segure e arraste para agendar, ou toque e escolha um horário.</p>
+    </div>
+    <span class="planner-unscheduled-tasks__count">{{ taskCount() }}</span>
+  </header>
+
+  @if (tasks().length > 0) {
+    <div
+      cdkDropList
+      #unplannedList="cdkDropList"
+      id="unplanned-tasks"
+      class="planner-unscheduled-tasks__list"
+      [cdkDropListData]="tasks()"
+      [cdkDropListConnectedTo]="connectedDropListIds()"
+      [cdkDropListDisabled]="!dragEnabled()"
+      [cdkDropListSortingDisabled]="true"
+    >
+      @for (task of tasks(); track task.id) {
+        <button
+          type="button"
+          cdkDrag
+          class="planner-unscheduled-task"
+          [cdkDragData]="task"
+          [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+          (cdkDragStarted)="beginDrag()"
+          (cdkDragMoved)="dragMoved.emit($event)"
+          (cdkDragEnded)="endDrag()"
+          (pointerdown)="prepareClick()"
+          (click)="selectTask(task)"
+          [attr.aria-pressed]="selectedTaskId() === task.id"
+          [cdkDragDisabled]="!dragEnabled()"
+          [class.planner-unscheduled-task--drag-disabled]="!dragEnabled()"
+        >
+          <mat-icon class="planner-unscheduled-task__drag" aria-hidden="true"
+            >drag_indicator</mat-icon
+          >
+          <span class="planner-unscheduled-task__content">
+            <strong>{{ task.title }}</strong>
+            @if (task.project) {
+              <span>{{ task.project }}</span>
+            }
+          </span>
+          <span
+            class="planner-unscheduled-task__category"
+            [class]="
+              'planner-unscheduled-task__category planner-unscheduled-task__category--' +
+              task.category
+            "
+          >
+            {{ categoryLabel(task.category) }}
+          </span>
+        </button>
+      }
+    </div>
+  } @else {
+    <p class="planner-unscheduled-tasks__empty">Todas as tarefas já receberam um horário.</p>
+  }
+</section>

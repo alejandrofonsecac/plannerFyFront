@@ -1,18 +1,10 @@
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  HostListener,
-  inject,
-  output,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, HostListener, inject, output, signal, viewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { AccentId, Theme, ThemeService } from '../../theme.service';
+import { PlannerViewService } from '../../planner-view.service';
 
-type SettingsTabId = 'appearance' | 'language' | 'account' | 'notifications' | 'privacy';
+type SettingsTabId =
+  'appearance' | 'visualization' | 'language' | 'account' | 'notifications' | 'privacy';
 
 interface SettingsTab {
   id: SettingsTabId;
@@ -30,8 +22,10 @@ interface SettingsTab {
 })
 export class SettingsModal implements AfterViewInit {
   readonly themeService = inject(ThemeService);
+  readonly plannerView = inject(PlannerViewService);
   readonly activeTab = signal<SettingsTabId>('appearance');
   readonly tabs: readonly SettingsTab[] = [
+    { id: 'visualization', label: 'Visualização', icon: 'view_quilt' },
     { id: 'appearance', label: 'Aparência', icon: 'palette' },
     { id: 'language', label: 'Idioma', icon: 'translate' },
     { id: 'account', label: 'Conta', icon: 'person' },
@@ -92,15 +86,27 @@ export class SettingsModal implements AfterViewInit {
   }
 
   onThemeOptionKeydown(event: KeyboardEvent, index: number): void {
-    this.moveRadio(event, index, this.themeService.themeOptions.length, (nextIndex) => {
-      this.setTheme(this.themeService.themeOptions[nextIndex].id);
-    }, '.settings-theme-option');
+    this.moveRadio(
+      event,
+      index,
+      this.themeService.themeOptions.length,
+      (nextIndex) => {
+        this.setTheme(this.themeService.themeOptions[nextIndex].id);
+      },
+      '.settings-theme-option',
+    );
   }
 
   onAccentOptionKeydown(event: KeyboardEvent, index: number): void {
-    this.moveRadio(event, index, this.themeService.accentOptions.length, (nextIndex) => {
-      this.setAccent(this.themeService.accentOptions[nextIndex].id);
-    }, '.settings-accent-option');
+    this.moveRadio(
+      event,
+      index,
+      this.themeService.accentOptions.length,
+      (nextIndex) => {
+        this.setAccent(this.themeService.accentOptions[nextIndex].id);
+      },
+      '.settings-accent-option',
+    );
   }
 
   private moveRadio(
@@ -137,7 +143,12 @@ export class SettingsModal implements AfterViewInit {
   }
 
   private focusableElements(): HTMLElement[] {
-    return this.queryElements('button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    return this.queryElements(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ).filter(
+      (element) =>
+        !(element instanceof HTMLInputElement && element.type === 'radio') || element.checked,
+    );
   }
 
   private tabElements(): HTMLElement[] {

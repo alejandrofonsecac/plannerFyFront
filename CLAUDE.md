@@ -33,10 +33,11 @@ src/app/
   pages/            # uma pasta por feature/rota (component + .html + .css, às vezes models/ e service/ próprios)
     home, login, habits, goals, notes, calendar, files, projects, config
     schedule/       # feature mais complexa: planner diário/semanal
-      components/   # subcomponentes do planner (day-view, week-view, event-card, event-form,
-                     #   sidebar, summary-card, habits-card, free-time-card, overlap-accordion,
-                     #   unscheduled-tasks, next-activity-card, daily-summary, header, tasks, planning)
-      models/        # PlannerEvent, PlannerTask, PlannerHabit, Task, TaskPriority, layout-tier, planner.utils
+      components/   # schedule-header, planner e tasks
+        planner/    # planning + views/, events/, sidebar/ e planner-unscheduled-tasks/
+        tasks/      # lista de tarefas e task-form/
+      services/     # planner, execução de hábitos, tarefas e endpoints compartilhados
+      models/        # PlannerEvent, PlannerTask, PlannerHabit, Task, TaskPriority e contratos de layout/visualiza??o (*.model.ts)
   shared/           # header, sidebar, main-layout (shell da aplicação), theme.service (dark/light)
   styles/           # buttons/cards/inputs/modal css utilitários + themes/colors.css + utilities/animations.css
 ```
@@ -55,7 +56,7 @@ src/app/
 
 - `PlannerEvent` / `PlannerEventDraft`: evento no planner (categoria: work/study/personal/event/habit, kind: event/task)
 - `PlannerTask`, `PlannerHabit`: itens auxiliares do dia (tarefas/hábitos ligados ao planner)
-- `Task` (em `models/task.ts`): tarefa "genérica" com `TaskPriority` (Alta/Média/Normal) e `TaskPeriod` (hoje/proximas/mais-tarde) — usada fora do contexto estrito do planner
+- `Task` (em `models/task.model.ts`): tarefa "genérica" com `TaskPriority` (Alta/Média/Normal) e `TaskPeriod` (hoje/proximas/mais-tarde) — usada fora do contexto estrito do planner
 - `PositionedPlannerEvent` / `PlannerOverlapGroup`: suporte de layout para renderizar eventos sobrepostos lado a lado (ver `planner.utils.ts`)
 
 Textos de domínio (labels, prioridades) estão em **português** — manter esse idioma ao adicionar novos campos/enum de domínio.
@@ -67,4 +68,4 @@ Textos de domínio (labels, prioridades) estão em **português** — manter ess
 - **Sem NgModules**: tudo standalone; ao criar componente novo, seguir o padrão de `imports: [...]` direto no `@Component`.
 - **CSS por componente + Tailwind + design tokens em `styles/`**: antes de estilizar algo novo, checar `styles/themes/colors.css` e `styles/components/*.css` para reaproveitar classes utilitárias existentes em vez de duplicar.
 - **Tema dark/light**: gerenciado por `shared/theme.service.ts`.
-- **Feature `schedule`** é a mais densa do repo (12 subcomponentes) — ao investigar bugs de UI de calendário/planner, começar por `schedule.ts` e `planner.utils.ts` (lógica de overlap/posicionamento).
+- **Feature `schedule`**: componentes organizados por responsabilidade; consultar [o mapa da agenda](src/app/pages/schedule/README.md). Ao investigar bugs de UI de calendário/planner, começar por `schedule.ts`, `components/planner/planning.ts` e `utils/planner.utils.ts`.

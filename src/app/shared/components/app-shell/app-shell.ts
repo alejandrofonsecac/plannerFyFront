@@ -21,7 +21,6 @@ export class AppShell {
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
-  private readonly themeService = inject(ThemeService);
   private readonly mobileHeader = viewChild(AppHeaderMobile);
   private readonly mobileDrawer = viewChild(AppDrawerMobile);
 
@@ -32,6 +31,7 @@ export class AppShell {
   private settingsOpener?: HTMLElement;
 
   constructor() {
+    inject(ThemeService);
     this.updatePageTitle();
     this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(() => {
       this.updatePageTitle();

@@ -5,7 +5,6 @@ export const NAVIGATION_SECTIONS: readonly NavigationSectionsModel[] = [
     title: 'INÍCIO',
     items: [
       { icon: 'home', label: 'Home', url: '/home' },
-      { icon: 'dashboard', label: 'Dashboard', url: '' },
     ],
   },
   {
@@ -22,7 +21,6 @@ export const NAVIGATION_SECTIONS: readonly NavigationSectionsModel[] = [
       { icon: 'target', label: 'Metas Semanais', url: '/goals' },
       { icon: 'self_improvement', label: 'Hábitos', url: '/habits' },
       { icon: 'note', label: 'Notas', url: '/notes' },
-      { icon: 'schedule', label: 'Time Blocking', url: '' },
       { icon: 'folder', label: 'Projetos', url: '/projects' },
     ],
   },

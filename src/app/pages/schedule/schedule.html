@@ -4,7 +4,7 @@
     [class.schedule-page__content--task-detail]="view() === 'tarefas' && tasksDetailOpen()"
     [class.schedule-page__content--full]="edgeToEdge()"
   >
-    <app-header
+    <app-schedule-header
       [activeContent]="activeContent()"
       [selectedDate]="selectedDate()"
       [viewMode]="plannerViewMode()"
@@ -42,6 +42,7 @@
           [selectedDate]="selectedDate()"
           [viewMode]="plannerViewMode()"
           [newEventRequest]="newEventRequest()"
+          (selectedDateChange)="selectedDate.set($event)"
         />
       } @else {
         <app-tasks

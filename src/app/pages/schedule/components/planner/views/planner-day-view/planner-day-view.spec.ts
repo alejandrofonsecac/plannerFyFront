@@ -1,0 +1,100 @@
+import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { PlannerDayView } from './planner-day-view';
+import { PlannerViewService } from '@app/shared/planner-view.service';
+import { LocalClockService } from '@app/shared/local-clock.service';
+
+describe('planner display and period navigation', () => {
+  const now = signal(new Date(2026, 8, 10, 6, 59));
+  beforeEach(() => {
+    localStorage.clear();
+    now.set(new Date(2026, 8, 10, 6, 59));
+    TestBed.configureTestingModule({
+      providers: [{ provide: LocalClockService, useValue: { now } }],
+    });
+  });
+
+  it('defaults to compact and preserves the chosen display across service instances', () => {
+    const preferences = TestBed.inject(PlannerViewService);
+    expect(preferences.display()).toBe('compact');
+    preferences.setDisplay('radial');
+    expect(TestBed.runInInjectionContext(() => new PlannerViewService()).display()).toBe('radial');
+    localStorage.setItem('plannerfy-planner-display', 'invalid');
+    expect(TestBed.runInInjectionContext(() => new PlannerViewService()).display()).toBe('compact');
+  });
+
+  it('keeps every compact slot available and only collapses empty slots', () => {
+    const fixture = TestBed.createComponent(PlannerDayView);
+    fixture.componentRef.setInput('date', now());
+    fixture.componentRef.setInput('events', [
+      {
+        id: 1,
+        date: '2026-09-10',
+        title: 'Consulta',
+        startTime: '06:45',
+        endTime: '07:15',
+        category: 'health',
+        kind: 'event',
+      },
+    ]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.planner-slot').length).toBe(24);
+    expect(fixture.nativeElement.querySelectorAll('.planner-slot--empty').length).toBe(22);
+    fixture.componentInstance.activateSlot('23:00');
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement
+        .querySelector('[id="daily-slot-23:00"]')
+        .classList.contains('planner-slot--expanded'),
+    ).toBe(true);
+  });
+
+  it('preserves manual browsing on other dates across period boundaries', () => {
+    TestBed.inject(PlannerViewService).setDisplay('periods');
+    const fixture = TestBed.createComponent(PlannerDayView);
+    fixture.componentRef.setInput('date', new Date(2026, 8, 11));
+    fixture.detectChanges();
+    fixture.componentInstance.activePeriod.set('night');
+    now.set(new Date(2026, 8, 10, 7, 0));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.activePeriod()).toBe('night');
+  });
+
+  it('preserves expanded compact slots across period boundaries', () => {
+    const fixture = TestBed.createComponent(PlannerDayView);
+    fixture.componentRef.setInput('date', now());
+    fixture.detectChanges();
+    fixture.componentInstance.activateSlot('23:00');
+    now.set(new Date(2026, 8, 10, 7, 0));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.expandedSlots().has('23:00')).toBe(true);
+  });
+
+  it('advances at period boundaries but preserves manual browsing within the same period', () => {
+    const preferences = TestBed.inject(PlannerViewService);
+    preferences.setDisplay('periods');
+    const fixture = TestBed.createComponent(PlannerDayView);
+    fixture.componentRef.setInput('date', now());
+    fixture.detectChanges();
+    expect(fixture.componentInstance.activePeriod()).toBe('dawn');
+    now.set(new Date(2026, 8, 10, 7, 0));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.activePeriod()).toBe('morning');
+    expect(fixture.componentInstance.slots().map((slot) => slot.startTime)).toEqual([
+      '07:00',
+      '08:00',
+      '09:00',
+      '10:00',
+      '11:00',
+      '12:00',
+    ]);
+    fixture.componentInstance.activePeriod.set('night');
+    now.set(new Date(2026, 8, 10, 7, 30));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.activePeriod()).toBe('night');
+    now.set(new Date(2026, 8, 10, 13, 0));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.activePeriod()).toBe('afternoon');
+  });
+});
