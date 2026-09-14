@@ -1,5 +1,20 @@
 # AgendaFrontend
 
+## Branch de produção e ChatGPT Sites
+
+A branch `production` é dedicada à versão publicada para testar alterações em produção.
+Prepare alterações em branches de desenvolvimento e integre nesta branch quando estiverem prontas para validação no ambiente publicado.
+
+- Compile com `npm run build:production`; a saída pública fica em `dist/`.
+- O projeto do ChatGPT Sites está vinculado em `.openai/hosting.json`.
+- Publique sempre o código e o build do mesmo commit da branch `production`.
+- Um push para `origin/production` não publica automaticamente no Sites; solicite a publicação de uma nova versão no ChatGPT Sites.
+- O frontend depende de um backend separado. A URL da API e a permissão CORS para a origem do site precisam estar configuradas para testar operações com dados reais.
+- Endereço do site: https://plannerfy-production.jfonsecacorrea08.chatgpt.site (acesso privado do proprietário).
+- Nesta primeira publicação, a API ainda aponta para `http://localhost:8080`; o backend de produção não foi fornecido. É possível validar a interface, mas operações dependentes da API não estão disponíveis sem o backend.
+- `work/planner-views-preview.html` é uma prévia isolada; a publicação usa a aplicação Angular completa.
+
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.14.
 
 ## Development server
