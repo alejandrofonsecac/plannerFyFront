@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, InjectionToken, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export type ResourceId = number | string;
 
@@ -13,7 +14,7 @@ export function withoutId<T extends { id: ResourceId }>(entity: T): Omit<T, 'id'
 
 /** Base da API. Pode ser substituída nos providers ao criar ambientes distintos. */
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL', {
-  factory: () => 'http://localhost:8080',
+  factory: () => environment.apiUrl,
 });
 
 /**
