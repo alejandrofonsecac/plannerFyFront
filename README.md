@@ -10,9 +10,9 @@ Prepare alterações em branches de desenvolvimento e integre nesta branch quand
 - Publique sempre o código e o build do mesmo commit da branch `production`.
 - Um push para `origin/production` não publica automaticamente no Sites; solicite a publicação de uma nova versão no ChatGPT Sites.
 - O frontend depende de um backend separado. A URL da API e a permissão CORS para a origem do site precisam estar configuradas para testar operações com dados reais.
-- Endereço do site: https://plannerfy-production.jfonsecacorrea08.chatgpt.site (acesso privado do proprietário).
+- Endereço do site: https://plannerfy-production.shady-birch-3380.chatgpt.site (acesso privado do proprietário).
 - O build de produção usa `https://api-workspace-vmky.onrender.com`, configurado em `src/environments/environment.production.ts`. O desenvolvimento local usa `http://localhost:8080` em `src/environments/environment.ts`.
-- O backend deve permitir CORS para `https://plannerfy-production.jfonsecacorrea08.chatgpt.site`, incluindo os métodos e cabeçalhos usados pela API. A conexão JDBC com o banco fica somente no backend.
+- O backend deve permitir CORS para `https://plannerfy-production.shady-birch-3380.chatgpt.site`, incluindo os métodos e cabeçalhos usados pela API. A conexão JDBC com o banco fica somente no backend.
 - `work/planner-views-preview.html` é uma prévia isolada; a publicação usa a aplicação Angular completa.
 
 
