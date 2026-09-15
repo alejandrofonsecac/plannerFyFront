@@ -1,0 +1,351 @@
+<main
+  class="login-page dark"
+  [style.--color-brand-primary]="accent.color"
+  [style.--color-brand-hover]="accent.hoverColor"
+>
+  <div class="login-layout">
+    <a class="brand" href="/login" aria-label="PlannerFy — início">
+      <span class="brand-mark" aria-hidden="true"
+        ><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i
+      ></span>
+      PlannerFy<span class="brand-dot">.</span>
+    </a>
+
+    <section class="intro" aria-labelledby="intro-title">
+      <p class="eyebrow"><span></span> PRODUTIVIDADE COM IA</p>
+      <h1 id="intro-title">Sua rotina organizada,<br /><span>sem esforço.</span></h1>
+      <p class="description">
+        Menos tempo planejando. Mais tempo vivendo.<br />Deixe a inteligência artificial cuidar da
+        sua agenda e<br class="desktop-break" />
+        abra espaço para o que realmente importa.
+      </p>
+      <ul class="benefits" aria-label="Recursos do PlannerFy">
+        <li><span aria-hidden="true">↻</span> Reorganiza tarefas</li>
+        <li><span aria-hidden="true">⌁</span> Detecta conflitos</li>
+        <li><span aria-hidden="true">✧</span> Aprende hábitos</li>
+      </ul>
+
+      <div class="illustration" aria-hidden="true">
+        <div class="particles">
+          @for (particle of particles; track $index) {
+            <i
+              [style.left.%]="particle.x"
+              [style.top.%]="particle.y"
+              [style.width.px]="particle.size"
+              [style.height.px]="particle.size"
+              [style.animation-delay.s]="particle.delay"
+              [style.animation-duration.s]="particle.duration"
+            ></i>
+          }
+        </div>
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <svg class="coffee" viewBox="0 0 240 240" fill="none">
+          <g class="steam" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M92 82c-17-20 18-23 1-44" />
+            <path d="M121 76c-17-20 18-23 1-44" />
+            <path d="M150 82c-17-20 18-23 1-44" />
+          </g>
+          <ellipse
+            cx="119"
+            cy="192"
+            rx="81"
+            ry="12"
+            stroke="currentColor"
+            stroke-width="1.5"
+            opacity=".35"
+          />
+          <path
+            d="M65 109h108v40c0 27-22 43-54 43s-54-16-54-43v-40Z"
+            fill="var(--color-bg-main)"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <ellipse
+            cx="119"
+            cy="109"
+            rx="54"
+            ry="12"
+            fill="var(--color-bg-sub)"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <ellipse cx="119" cy="111" rx="40" ry="6" fill="currentColor" opacity=".12" />
+          <path
+            d="M174 118h9c29 0 26 42-12 42M84 139v9c0 12 8 22 18 25"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path d="m115 142-7 12h10l-3 12 15-17h-11l5-7" fill="currentColor" />
+        </svg>
+        <div class="float-card task-card">
+          <div class="mini-heading">SEU DIA, MAIS LEVE <span>•••</span></div>
+          <div class="mini-task"><span class="check">✓</span><s>Planejar a semana</s></div>
+          <div class="mini-task"><span class="empty-check"></span><span>Tempo para você</span></div>
+          <div class="task-progress"><i></i></div>
+        </div>
+        <div class="float-card calendar-card">
+          <div class="mini-heading">SETEMBRO <span>‹ &nbsp; ›</span></div>
+          <div class="mini-calendar">
+            <span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><b>14</b
+            ><b class="selected">15</b><b>16</b><b>17</b><b>18</b>
+          </div>
+        </div>
+        <div class="float-card clock-card">
+          <svg viewBox="0 0 44 44" fill="none">
+            <circle cx="22" cy="22" r="19" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M22 10v12l8 5"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <circle cx="22" cy="22" r="2" fill="currentColor" />
+          </svg>
+          <div><strong>Seu tempo importa</strong><span>Um passo de cada vez.</span></div>
+        </div>
+        <div class="float-card reminder-card">
+          <span class="reminder-icon">✧</span>
+          <div><strong>Uma pausa faz bem</strong><span>Que tal um café agora?</span></div>
+          <i></i>
+        </div>
+        <span class="spark spark-one">✦</span><span class="spark spark-two">+</span>
+      </div>
+      <p class="intro-footer">
+        <span aria-hidden="true">✧</span> Planeje com intenção. Viva com mais leveza.
+      </p>
+    </section>
+
+    <section class="auth-column" aria-label="Acesse sua conta">
+      <div class="auth-card">
+        <div class="auth-tabs" role="tablist" aria-label="Acesso">
+          <button
+            id="login-tab"
+            type="button"
+            role="tab"
+            [attr.aria-selected]="mode() !== 'register'"
+            aria-controls="auth-panel"
+            [tabIndex]="mode() !== 'register' ? 0 : -1"
+            [disabled]="loading()"
+            (click)="setMode('login')"
+            (keydown.arrowright)="setMode('register'); registerTab.focus()"
+            #loginTab
+          >
+            Entrar
+          </button>
+          <button
+            id="register-tab"
+            type="button"
+            role="tab"
+            [attr.aria-selected]="mode() === 'register'"
+            aria-controls="auth-panel"
+            [tabIndex]="mode() === 'register' ? 0 : -1"
+            [disabled]="loading()"
+            (click)="setMode('register')"
+            (keydown.arrowleft)="setMode('login'); loginTab.focus()"
+            #registerTab
+          >
+            Criar conta
+          </button>
+        </div>
+        <div
+          id="auth-panel"
+          role="tabpanel"
+          [attr.aria-labelledby]="mode() === 'register' ? 'register-tab' : 'login-tab'"
+        >
+          <div class="auth-heading">
+            <span class="welcome-icon" aria-hidden="true">{{
+              mode() === 'reset' ? '↗' : '✧'
+            }}</span>
+            <h2>
+              {{
+                mode() === 'login'
+                  ? 'Bem-vindo de volta'
+                  : mode() === 'register'
+                    ? 'Seu próximo capítulo'
+                    : 'Esqueceu sua senha?'
+              }}
+            </h2>
+            <p>
+              {{
+                mode() === 'login'
+                  ? 'Continue de onde parou.'
+                  : mode() === 'register'
+                    ? 'Crie sua conta e organize uma rotina mais leve.'
+                    : 'Informe seu email para recuperar o acesso.'
+              }}
+            </p>
+          </div>
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate [attr.aria-busy]="loading()">
+            <fieldset [disabled]="loading()">
+              @if (mode() === 'register') {
+                <div class="field">
+                  <label for="name">Nome</label>
+                  <div class="input-shell" [class.invalid]="hasError('name')">
+                    <input
+                      class="input-control"
+                      id="name"
+                      formControlName="name"
+                      autocomplete="name"
+                      placeholder="Como podemos chamar você?"
+                      [attr.aria-invalid]="hasError('name')"
+                      aria-describedby="name-error"
+                      required
+                    />
+                  </div>
+                  <span class="field-error" id="name-error">{{
+                    hasError('name') ? 'Informe seu nome.' : ''
+                  }}</span>
+                </div>
+              }
+              <div class="field">
+                <label for="email">Email</label>
+                <div class="input-shell" [class.invalid]="hasError('email')">
+                  <input
+                    class="input-control"
+                    id="email"
+                    type="email"
+                    formControlName="email"
+                    autocomplete="email"
+                    placeholder="você@exemplo.com"
+                    [attr.aria-invalid]="hasError('email')"
+                    aria-describedby="email-error"
+                    required
+                  />
+                </div>
+                <span class="field-error" id="email-error">{{
+                  hasError('email') ? 'Informe um email válido.' : ''
+                }}</span>
+              </div>
+              @if (mode() !== 'reset') {
+                <div class="field">
+                  <div class="label-row">
+                    <label for="password">Senha</label>
+                    @if (mode() === 'login') {
+                      <button class="text-link" type="button" (click)="setMode('reset')">
+                        Esqueceu sua senha?
+                      </button>
+                    }
+                  </div>
+                  <div class="input-shell" [class.invalid]="hasError('password')">
+                    <input
+                      class="input-control"
+                      id="password"
+                      [type]="showPassword() ? 'text' : 'password'"
+                      formControlName="password"
+                      [autocomplete]="mode() === 'register' ? 'new-password' : 'current-password'"
+                      [placeholder]="
+                        mode() === 'register' ? 'Pelo menos 8 caracteres' : 'Digite sua senha'
+                      "
+                      [attr.aria-invalid]="hasError('password')"
+                      aria-describedby="password-error"
+                      required
+                    />
+                    <button
+                      class="eye-button"
+                      type="button"
+                      [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                      [attr.aria-pressed]="showPassword()"
+                      (click)="showPassword.set(!showPassword())"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                        <circle cx="12" cy="12" r="3" />
+                        @if (showPassword()) {
+                          <path d="m3 3 18 18" />
+                        }
+                      </svg>
+                    </button>
+                  </div>
+                  <span class="field-error" id="password-error">{{
+                    hasError('password')
+                      ? mode() === 'register'
+                        ? 'Use pelo menos 8 caracteres.'
+                        : 'Informe sua senha.'
+                      : ''
+                  }}</span>
+                </div>
+              }
+              <button
+                class="button button--primary button--full submit-button"
+                type="submit"
+                [disabled]="loading()"
+              >
+                @if (loading()) {
+                  <span class="spinner" aria-hidden="true"></span> Aguarde…
+                } @else {
+                  {{
+                    mode() === 'login'
+                      ? 'Entrar'
+                      : mode() === 'register'
+                        ? 'Criar conta'
+                        : 'Enviar instruções'
+                  }}
+                  <span aria-hidden="true">→</span>
+                }
+              </button>
+            </fieldset>
+          </form>
+          <div class="feedback" role="status" aria-live="polite">{{ feedback() }}</div>
+          @if (mode() !== 'reset') {
+            <div class="divider"><span>ou</span></div>
+            <button
+              class="button button--full google-button"
+              type="button"
+              [disabled]="loading()"
+              (click)="submit('google')"
+            >
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <path
+                  fill="#EA4335"
+                  d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"
+                />
+                <path
+                  fill="#4285F4"
+                  d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6C44.4 38.03 46.98 31.87 46.98 24.55Z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.78-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.53 2.56 10.78l7.97-6.19Z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"
+                />
+              </svg>
+              Continuar com Google
+            </button>
+          }
+          <p class="card-footer">
+            {{
+              mode() === 'login'
+                ? 'Não possui uma conta?'
+                : mode() === 'register'
+                  ? 'Já possui uma conta?'
+                  : 'Lembrou sua senha?'
+            }}
+            <button
+              type="button"
+              class="text-link"
+              [disabled]="loading()"
+              (click)="setMode(mode() === 'login' ? 'register' : 'login')"
+            >
+              {{ mode() === 'login' ? 'Criar conta' : 'Entrar' }}
+            </button>
+          </p>
+        </div>
+      </div>
+      <p class="auth-caption">
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <rect x="5" y="9" width="10" height="8" rx="2" />
+          <path d="M7 9V6a3 3 0 0 1 6 0v3" />
+        </svg>
+        Sua rotina merece um pouco mais de tranquilidade.
+      </p>
+    </section>
+    <footer class="page-footer">
+      © {{ 2026 }} PlannerFy <span>Mais espaço para o que importa.</span>
+    </footer>
+  </div>
+</main>
