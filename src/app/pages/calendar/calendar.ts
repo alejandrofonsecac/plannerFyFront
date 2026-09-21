@@ -7,13 +7,9 @@ import {
   signal,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { catchError, of } from 'rxjs';
 import { CalendarEventForm } from './components/calendar-event-form/calendar-event-form';
 import { CalendarEvent, CalendarEventDraft } from './models';
 import { CalendarEventService } from './service/calendar-event.service';
-import { TasksService } from '@pages/schedule/services/tasks.service';
-import type { Task } from '@pages/schedule/models';
-import { TaskPriority } from '@pages/schedule/models';
 import {
   addDays,
   addMonths,
@@ -51,13 +47,11 @@ const WEEKDAY_FORMATTER = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
 })
 export class Calendar implements OnInit {
   private readonly calendarEventService = inject(CalendarEventService);
-  private readonly tasksService = inject(TasksService);
 
   readonly view = signal<CalendarView>('month');
   readonly referenceDate = signal(startOfDay(new Date()));
   readonly selectedDate = signal(startOfDay(new Date()));
-  readonly taskEvents = signal<CalendarEvent[]>([]);
-  readonly events = computed(() => [...this.calendarEventService.events(), ...this.taskEvents()]);
+  readonly events = this.calendarEventService.events;
   readonly dataLoadFailed = signal(false);
   readonly selectedEvent = signal<CalendarEvent | null>(null);
   readonly formOpen = signal(false);
@@ -71,6 +65,7 @@ export class Calendar implements OnInit {
     const firstDay = startOfWeek(this.referenceDate());
     return Array.from({ length: 7 }, (_, index) => addDays(firstDay, index));
   });
+
   readonly eventsByDate = computed(() => {
     const entries = new Map<string, CalendarEvent[]>();
 
@@ -85,32 +80,32 @@ export class Calendar implements OnInit {
     );
     return entries;
   });
-  readonly selectedDayEvents = computed(() => this.eventsForDate(toDateKey(this.selectedDate())));
+
+  readonly selectedDayEvents = computed(() => 
+    this.eventsForDate(toDateKey(this.selectedDate()))
+  );
+
   readonly monthLabel = computed(() =>
     this.capitalize(MONTH_FORMATTER.format(this.referenceDate())),
   );
-  readonly weekLabel = computed(() => this.formatWeekRange(this.weekDays()));
+
+  readonly weekLabel = computed(() => 
+    this.formatWeekRange(this.weekDays())
+  );
+
   readonly selectedDateLabel = computed(() =>
     this.capitalize(DAY_FORMATTER.format(this.selectedDate())),
   );
+
   readonly weekHours = Array.from(
     { length: WEEK_END_HOUR - WEEK_START_HOUR + 1 },
     (_, index) => WEEK_START_HOUR + index,
   );
+
   readonly toDateKey = toDateKey;
 
   ngOnInit(): void {
-    this.tasksService
-      .getTasks()
-      .pipe(
-        catchError(() => {
-          this.dataLoadFailed.set(true);
-          return of<Task[]>([]);
-        }),
-      )
-      .subscribe((tasks) =>
-        this.taskEvents.set(tasks.flatMap((task) => this.taskToCalendarEvent(task))),
-      );
+    this.calendarEventService.load();
   }
 
   previousPeriod(): void {
@@ -181,16 +176,16 @@ export class Calendar implements OnInit {
     this.editingEvent.set(null);
   }
 
-  saveEvent(draft: CalendarEventDraft): void {
+  async saveEvent(draft: CalendarEventDraft): Promise<void> {
     const eventBeingEdited = this.editingEvent();
 
     if (eventBeingEdited) {
       const updatedEvent = { ...eventBeingEdited, ...draft };
-      this.calendarEventService.update(updatedEvent);
+      if (!(await this.calendarEventService.update(updatedEvent))) return;
       this.selectedEvent.set(updatedEvent);
       this.selectedDate.set(fromDateKey(updatedEvent.date));
     } else {
-      this.calendarEventService.create(draft);
+      if (!(await this.calendarEventService.create(draft))) return;
       this.selectedDate.set(fromDateKey(draft.date));
     }
     this.closeForm();
@@ -204,11 +199,11 @@ export class Calendar implements OnInit {
     this.eventPendingDeletion.set(null);
   }
 
-  deleteEvent(): void {
+  async deleteEvent(): Promise<void> {
     const event = this.eventPendingDeletion();
     if (!event) return;
 
-    this.calendarEventService.remove(event.id);
+    if (!(await this.calendarEventService.remove(event.id))) return;
     if (this.selectedEvent()?.id === event.id) this.selectedEvent.set(null);
     this.eventPendingDeletion.set(null);
   }
@@ -298,88 +293,5 @@ export class Calendar implements OnInit {
 
   private capitalize(value: string): string {
     return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
-  }
-
-  private taskToCalendarEvent(task: Task): CalendarEvent[] {
-    const date = this.taskDateKey(task);
-    if (!date) {
-      return [];
-    }
-
-    const startTime = this.taskStartTime(task.dueLabel);
-    return [
-      {
-        id: `task-${task.id}`,
-        title: task.title,
-        date,
-        startTime,
-        endTime: this.addOneHour(startTime),
-        description: task.notes ? `Tarefa: ${task.notes}` : 'Tarefa',
-        source: 'internal',
-        category: this.taskCategory(task.priority),
-      },
-    ];
-  }
-
-  private taskDateKey(task: Task): string | null {
-    const label = task.dueLabel?.trim();
-    if (!label || label === 'Sem data') {
-      return null;
-    }
-
-    const normalizedLabel = label
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLocaleLowerCase('pt-BR');
-    const today = startOfDay(new Date());
-
-    if (normalizedLabel.startsWith('hoje')) {
-      return toDateKey(today);
-    }
-    if (normalizedLabel.startsWith('amanha')) {
-      return toDateKey(addDays(today, 1));
-    }
-
-    const isoDate = label.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
-    if (isoDate) {
-      return this.dateKeyFromParts(Number(isoDate[1]), Number(isoDate[2]), Number(isoDate[3]));
-    }
-
-    const brazilianDate = label.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?\b/);
-    if (!brazilianDate) {
-      return null;
-    }
-
-    return this.dateKeyFromParts(
-      Number(brazilianDate[3] ?? today.getFullYear()),
-      Number(brazilianDate[2]),
-      Number(brazilianDate[1]),
-    );
-  }
-
-  private taskStartTime(dueLabel: string): string {
-    return dueLabel.match(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/)?.[0] ?? '08:00';
-  }
-
-  private addOneHour(startTime: string): string {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const endInMinutes = Math.min(hours * 60 + minutes + 60, 23 * 60 + 59);
-    return `${Math.floor(endInMinutes / 60)
-      .toString()
-      .padStart(2, '0')}:${(endInMinutes % 60).toString().padStart(2, '0')}`;
-  }
-
-  private taskCategory(priority: TaskPriority): CalendarEvent['category'] {
-    if (priority === TaskPriority.ALTA) return 'work';
-    if (priority === TaskPriority.MEDIA) return 'study';
-    return 'personal';
-  }
-
-  private dateKeyFromParts(year: number, month: number, day: number): string | null {
-    const date = new Date(year, month - 1, day);
-    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-      return null;
-    }
-    return toDateKey(date);
   }
 }

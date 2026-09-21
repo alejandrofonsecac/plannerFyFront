@@ -4,6 +4,7 @@ export type CalendarEventCategory = 'work' | 'study' | 'personal' | 'health' | '
 
 export interface CalendarEvent {
   id: number | string;
+  readOnly?: boolean;
   title: string;
   date: string;
   startTime: string;
@@ -14,4 +15,4 @@ export interface CalendarEvent {
   category: CalendarEventCategory;
 }
 
-export type CalendarEventDraft = Omit<CalendarEvent, 'id'>;
+export type CalendarEventDraft = Omit<CalendarEvent, 'id' | 'readOnly'>;

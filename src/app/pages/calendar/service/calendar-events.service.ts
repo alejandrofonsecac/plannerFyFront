@@ -1,4 +1,5 @@
 import { HttpClient } from '@angular/common/http';
+import { API_BASE_URL } from '../../../core/data-access/api-client.service';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CalendarEvent, CalendarEventDraft } from '../models';
@@ -8,7 +9,7 @@ import { CalendarEvent, CalendarEventDraft } from '../models';
 })
 export class CalendarEventsService {
   private readonly httpClient = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/events';
+  private readonly apiUrl = inject(API_BASE_URL).replace(/\/+$/, '') + '/events';
 
   getEvents(): Observable<CalendarEvent[]> {
     return this.httpClient.get<CalendarEvent[]>(this.apiUrl);
