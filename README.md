@@ -57,3 +57,15 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## AutenticaÃ§Ã£o
+
+Login e cadastro estÃ£o conectados Ã  API. Consulte [AUTHENTICATION.md](AUTHENTICATION.md) para configuraÃ§Ã£o, seguranÃ§a e testes. A sessÃ£o fica em memÃ³ria; recarregar a pÃ¡gina exige novo login.
+
+## Contexto de desenvolvimento
+
+Consulte [AGENTS.md](AGENTS.md) antes de alterar o projeto. O documento define o backend como responsÃ¡vel pelas regras de negÃ³cio e pelos cÃ¡lculos oficiais, a divisÃ£o de responsabilidades e os padrÃµes de cÃ³digo compartilhados com o repositÃ³rio api-workspace.
+
+## Regras de negócio
+
+Consulte [BUSINESS_RULES.md](BUSINESS_RULES.md) para os contratos migrados e a pendência de recuperação das migrations V1/V2 antes da implantação.
