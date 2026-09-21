@@ -18,7 +18,7 @@ import type {
   PlannerTask,
   SchedulingResult,
 } from '@pages/schedule/models';
-import { dateKey, startOfDay, addDays, summarizePlannerDay } from '@pages/schedule/utils';
+import { dateKey, startOfDay, addDays, formatPlannerDuration } from '@pages/schedule/utils';
 import { HabitExecutionService } from '@pages/schedule/services/habit-execution.service';
 import { PlannerService } from '@pages/schedule/services/planner-services/planner.service';
 import { PlannerSchedulingService } from '@pages/schedule/services/planner-services/planner-scheduling.service';
@@ -36,8 +36,6 @@ const OPERATION_MESSAGES = {
   'missing-task': 'Esta tarefa não está mais na bandeja.',
   busy: 'Aguarde a operação em andamento.',
   failed: 'Não foi possível salvar. Seus dados foram mantidos; tente novamente.',
-  'cleanup-pending':
-    'O compromisso foi criado, mas a retirada da tarefa da bandeja falhou. Conclua o agendamento para tentar essa etapa novamente.',
 };
 
 @Component({
@@ -73,16 +71,17 @@ export class Planning {
   readonly selectedTask = signal<PlannerTask | null>(null);
   readonly taskMessage = signal('');
   readonly operationError = signal('');
-  readonly cleanupTaskId = signal<number | null>(null);
   readonly eventFormOpen = signal(false);
   readonly editingEvent = signal<PlannerEvent | null>(null);
-  readonly summary = computed(() =>
-    summarizePlannerDay(
-      dateKey(this.selectedDate()),
-      this.events(),
-      this.unscheduledTasks().length,
-    ),
-  );
+  readonly summary = computed(() => {
+    const value = this.planner.summary();
+    if (!value) return null;
+    return {
+      ...value,
+      plannedHours: formatPlannerDuration(value.plannedMinutes),
+      freeTime: formatPlannerDuration(value.freeMinutes),
+    };
+  });
   readonly dailyDropListIds = computed(() =>
     this.preferences.display() === 'radial'
       ? ['radial-day']
@@ -94,7 +93,8 @@ export class Planning {
 
   constructor() {
     effect(() => {
-      this.selectedDate();
+      const date = this.selectedDate();
+      this.planner.loadSummary(dateKey(date));
       this.viewMode();
       this.selectedTask.set(null);
       this.taskMessage.set('');
@@ -121,18 +121,25 @@ export class Planning {
   }
 
   async createEvent(draft: PlannerEventDraft): Promise<void> {
-    if (this.showResult(await this.scheduling.createEvent(draft))) this.closeEventForm();
+    if (this.showResult(await this.scheduling.createEvent(draft))) {
+      this.reloadSummary();
+      this.closeEventForm();
+    }
   }
 
   async updateEvent(draft: PlannerEventDraft): Promise<void> {
     const event = this.editingEvent();
-    if (event && this.showResult(await this.scheduling.updateEvent({ ...event, ...draft })))
+    if (event && this.showResult(await this.scheduling.updateEvent({ ...event, ...draft }))) {
+      this.reloadSummary();
       this.closeEventForm();
+    }
   }
 
   async removeEvent(id: number): Promise<void> {
-    if (this.showResult(await this.scheduling.removeEvent(id)) && this.editingEvent()?.id === id)
-      this.closeEventForm();
+    if (this.showResult(await this.scheduling.removeEvent(id))) {
+      this.reloadSummary();
+      if (this.editingEvent()?.id === id) this.closeEventForm();
+    }
   }
 
   openEventEditor(event: PlannerEvent): void {
@@ -165,20 +172,14 @@ export class Planning {
   async scheduleTask(task: PlannerTask, time: string): Promise<void> {
     const selectedDate = dateKey(this.selectedDate());
     const result = await this.scheduling.scheduleTask(task.id, selectedDate, time);
-    if (result.status === 'cleanup-pending') this.cleanupTaskId.set(task.id);
     if (this.showResult(result)) {
-      this.cleanupTaskId.set(null);
+      this.reloadSummary();
       if (this.selectedTask()?.id === task.id) this.selectedTask.set(null);
       if (selectedDate === dateKey(this.selectedDate()))
         this.taskMessage.set(
           `${task.title} agendada para ${result.status === 'saved' ? (result.event?.startTime ?? time) : time}.`,
         );
     }
-  }
-
-  retryCleanup(): void {
-    const task = this.unscheduledTasks().find((item) => item.id === this.cleanupTaskId());
-    if (task) void this.scheduleTask(task, '');
   }
 
   changeDay(amount: number): void {
@@ -192,5 +193,9 @@ export class Planning {
   private showResult(result: SchedulingResult): boolean {
     this.operationError.set(result.status === 'saved' ? '' : OPERATION_MESSAGES[result.status]);
     return result.status === 'saved';
+  }
+
+  private reloadSummary(): void {
+    this.planner.loadSummary(dateKey(this.selectedDate()));
   }
 }

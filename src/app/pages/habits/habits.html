@@ -46,7 +46,9 @@
       <span class="habits-page__count">{{ filteredHabits().length }} de {{ habits().length }}</span>
     </div>
 
-    <app-habit-summary-bar [habits]="habits()" />
+    @if (habitService.summary(); as summary) {
+      <app-habit-summary-bar [summary]="summary" />
+    }
 
     @if (filteredHabits().length) {
       <app-habit-grid

@@ -19,11 +19,11 @@ export class NoteService {
     return this.api.post<NoteModel, Partial<NoteModel>>(RESOURCE, note);
   }
 
-  updateNote(id: number, note: Partial<NoteModel>): Observable<NoteModel> {
+  updateNote(id: string, note: Partial<NoteModel>): Observable<NoteModel> {
     return this.api.put<NoteModel, Partial<NoteModel>>(RESOURCE, id, note);
   }
 
-  deleteNote(id: number): Observable<void> {
+  deleteNote(id: string): Observable<void> {
     return this.api.delete(RESOURCE, id);
   }
 }

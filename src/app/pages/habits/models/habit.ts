@@ -13,6 +13,9 @@ export interface Habit {
   status: HabitStatus;
   completedDates: string[];
   createdAt: string;
+  asOfDate: string;
+  metrics: HabitMetrics;
+  daysOfWeek: number[];
 }
 
 export interface HabitDraft {
@@ -23,6 +26,7 @@ export interface HabitDraft {
   time: string;
   goal: string;
   note: string;
+  daysOfWeek?: number[];
 }
 
 export interface HabitMetrics {
@@ -38,6 +42,11 @@ export interface HabitSummary {
   highestCurrentStreak: number;
   accumulatedDays: number;
   averageConsistency: number;
+}
+
+export interface HabitBoard {
+  habits: Habit[];
+  summary: HabitSummary;
 }
 
 export function emptyHabitDraft(): HabitDraft {
@@ -61,5 +70,6 @@ export function habitToDraft(habit: Habit): HabitDraft {
     time: habit.time ?? '',
     goal: habit.goal ?? '',
     note: habit.note ?? '',
+    daysOfWeek: habit.daysOfWeek,
   };
 }

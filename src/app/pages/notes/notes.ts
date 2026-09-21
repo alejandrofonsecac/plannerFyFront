@@ -19,7 +19,7 @@ export class Notes implements OnInit {
   searchTerm = '';
   isEditorOpen = false;
   isCreating = false;
-  editingId: number | null = null;
+  editingId: string | null = null;
   draftTitle = '';
   draftContent = '';
   private originalTitle = '';
@@ -108,10 +108,8 @@ export class Notes implements OnInit {
       const newNote: Partial<NoteModel> = {
         title,
         description: this.draftContent,
-        edited: new Date(),
         favourite: false,
         fixed: false,
-        fixedAt: null,
       };
 
       this.noteService.createNote(newNote).subscribe(() => {
@@ -123,7 +121,6 @@ export class Notes implements OnInit {
       const updatedData: Partial<NoteModel> = {
         title,
         description: this.draftContent,
-        edited: new Date(),
       };
 
       this.noteService.updateNote(this.editingId, updatedData).subscribe(() => {
@@ -154,9 +151,7 @@ export class Notes implements OnInit {
     event.stopPropagation();
     if (nota.id === undefined) return;
     const fixed = !nota.fixed;
-    const fixedAt = fixed ? new Date() : null;
-
-    this.noteService.updateNote(nota.id, { fixed, fixedAt }).subscribe(() => {
+    this.noteService.updateNote(nota.id, { fixed }).subscribe(() => {
       this.loadNotes();
     });
   }

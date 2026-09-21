@@ -6,6 +6,7 @@
     </button>
   </div>
 }
+@if (summary(); as data) {
 <section
   class="planner-layout"
   [class.planner-layout--weekly]="viewMode() === 'weekly'"
@@ -17,7 +18,7 @@
       @if (preferences.display() === 'radial') {
         <app-planner-radial-view
           [date]="selectedDate()"
-          [events]="summary().events"
+          [events]="data.events"
           [selectingTask]="!!selectedTask()"
           (taskDropped)="onTaskDropped($event.event, $event.slotTime)"
           (slotSelected)="scheduleSelectedTask($event)"
@@ -27,7 +28,7 @@
       } @else {
         <app-planner-day-view
           [date]="selectedDate()"
-          [events]="summary().events"
+          [events]="data.events"
           [dragEnabled]="dragAndDropEnabled()"
           [selectingTask]="!!selectedTask()"
           (slotSelected)="scheduleSelectedTask($event)"
@@ -50,7 +51,7 @@
     <aside class="planner-layout__daily-aside" aria-label="Painel lateral do planejador">
       <app-planner-task-tray
         [tasks]="unscheduledTasks()"
-        [availability]="summary().availability"
+        [availability]="data.availability"
         [selectedTask]="selectedTask()"
         (selectedTaskChange)="selectedTask.set($event)"
         [connectedDropListIds]="dailyDropListIds()"
@@ -63,26 +64,28 @@
 
       <app-planner-sidebar
         [date]="selectedDate()"
-        [events]="summary().events"
-        [taskCount]="summary().taskCount"
-        [eventCount]="summary().eventCount"
+        [events]="data.events"
+        [nextActivity]="data.nextActivity"
+        [taskCount]="data.taskCount"
+        [eventCount]="data.eventCount"
         [habits]="habits()"
-        [plannedHours]="summary().plannedHours"
-        [freeTime]="summary().freeTime"
-        [freeTimePercentage]="summary().freeTimePercentage"
+        [plannedHours]="data.plannedHours"
+        [freeTime]="data.freeTime"
+        [freeTimePercentage]="data.freeTimePercentage"
         (habitToggled)="toggleHabit($event)"
       />
     </aside>
   } @else {
     <app-planner-sidebar
       [date]="selectedDate()"
-      [events]="summary().events"
-      [taskCount]="summary().taskCount"
-      [eventCount]="summary().eventCount"
+      [events]="data.events"
+      [nextActivity]="data.nextActivity"
+      [taskCount]="data.taskCount"
+      [eventCount]="data.eventCount"
       [habits]="habits()"
-      [plannedHours]="summary().plannedHours"
-      [freeTime]="summary().freeTime"
-      [freeTimePercentage]="summary().freeTimePercentage"
+      [plannedHours]="data.plannedHours"
+      [freeTime]="data.freeTime"
+      [freeTimePercentage]="data.freeTimePercentage"
       (habitToggled)="toggleHabit($event)"
     />
   }
@@ -101,19 +104,12 @@
   @if (operationError(); as message) {
     <div class="planner-operation-error card" role="alert">
       <p>{{ message }}</p>
-      @if (cleanupTaskId() !== null) {
-        <button
-          type="button"
-          class="button button--secondary"
-          [disabled]="scheduling.busy()"
-          (click)="retryCleanup()"
-        >
-          Concluir agendamento
-        </button>
-      }
       <button type="button" class="button button--ghost" (click)="operationError.set('')">
         Fechar aviso
       </button>
     </div>
   }
 </section>
+} @else {
+  <div class="card p-4" role="status">Carregando planejamento...</div>
+}

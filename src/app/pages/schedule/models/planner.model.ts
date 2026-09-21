@@ -68,3 +68,15 @@ export interface PlannerOverlapGroup {
   startTime: string;
   endTime: string;
 }
+
+export interface PlannerDaySummary {
+  date: string;
+  events: PlannerEvent[];
+  availability: PlannerDayAvailability;
+  taskCount: number;
+  eventCount: number;
+  plannedMinutes: number;
+  freeMinutes: number;
+  freeTimePercentage: number;
+  nextActivity: PlannerEvent | null;
+}

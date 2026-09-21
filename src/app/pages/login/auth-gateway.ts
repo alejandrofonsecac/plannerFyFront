@@ -1,20 +1,14 @@
-import { InjectionToken } from '@angular/core';
+import { inject, InjectionToken } from '@angular/core';
+import { AuthService } from '../../core/auth/data-access/auth.service';
+import type { AuthCredentials } from '../../core/auth/models/auth.model';
 
-export type AuthMode = 'login' | 'register' | 'reset';
+export type AuthMode = 'login' | 'register';
 
-/** Provide an implementation when the backend authentication contract is available. */
 export interface AuthGateway {
-  submit(
-    mode: AuthMode | 'google',
-    credentials: { name: string; email: string; password: string },
-  ): Promise<void>;
+  submit(mode: AuthMode, credentials: AuthCredentials): Promise<void>;
 }
 
 export const AUTH_GATEWAY = new InjectionToken<AuthGateway>('AUTH_GATEWAY', {
   providedIn: 'root',
-  factory: () => ({
-    async submit() {
-      throw new Error('A autenticação ainda não está disponível. Tente novamente mais tarde.');
-    },
-  }),
+  factory: () => inject(AuthService),
 });

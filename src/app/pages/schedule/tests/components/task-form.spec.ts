@@ -11,10 +11,10 @@ describe('task form dates', () => {
     form.saveForm.subscribe(saved);
     form.taskForm.patchValue({ title: 'Ler', dueDate: dateKey(new Date()), dueTime: '23:00' });
     form.onSubmit();
-    expect(saved.mock.calls[0][0].dueLabel).toBe('Hoje, 23:00');
+    expect(saved.mock.calls[0][0]).toMatchObject({ dueDate: dateKey(new Date()), dueTime: '23:00' });
     form.taskForm.patchValue({ dueDate: '', dueTime: '' });
     form.onSubmit();
-    expect(saved.mock.calls[1][0].dueLabel).toBe('Sem data');
+    expect(saved.mock.calls[1][0]).toMatchObject({ dueDate: null, dueTime: null });
   });
   it('does not submit an impossible calendar date', () => {
     const form = TestBed.createComponent(TaskForm).componentInstance;

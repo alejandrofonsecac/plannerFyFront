@@ -1,38 +1,36 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { catchError, forkJoin, of } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ApiClient } from '../../../core/data-access/api-client.service';
-import { CalendarEvent } from '../../calendar/models';
-import { Habit } from '../../habits/models/habit';
-import { calculateHabitSummary } from '../../habits/utils/habit-metrics';
-import type { PlannerDayAvailability, PlannerEvent, Task } from '@pages/schedule/models';
-import { PLANNER_SLOT_COUNT } from '@pages/schedule/constants';
-import { dateKey, getPlannerDayAvailability } from '@pages/schedule/utils';
-import { SCHEDULE_TASKS_LIST_RESOURCE } from '@pages/schedule/services/schedule-tasks.endpoints';
-import { WeatherResponse } from '../models/weather';
+import type { PlannerDayAvailability, PlannerEvent } from '@pages/schedule/models';
+import { parseLocalDate } from '@pages/schedule/utils';
+import type { WeatherResponse } from '../models/weather';
 import { WeatherService } from './weather/weatherService.service';
 
 export type HomeTimeSegmentStatus = 'busy' | 'attention' | 'free' | 'unknown';
 
-interface HomeBackendData {
-  tasks: Task[] | null;
-  plannerEvents: PlannerEvent[] | null;
-  plannerAvailability: PlannerDayAvailability | null;
-  habits: Habit[] | null;
-  calendarEvents: CalendarEvent[] | null;
+interface BackendDashboard {
+  date: string;
+  planner: {
+    availability: PlannerDayAvailability;
+    events: PlannerEvent[];
+  };
+  focus: { id: number; title: string; description: string | null; progress: number } | null;
+  habits: {
+    id: number;
+    icon: string;
+    name: string;
+    completed: number;
+    target: number;
+    progress: number;
+  }[];
+  summary: { completedTasks: number; totalTasks: number; highestCurrentStreak: number };
 }
 
 export interface HomeDashboardData {
   appName: string;
   pageName: string;
-  profile: {
-    initials: string;
-    name: string | null;
-  };
-  welcome: {
-    eyebrow: string;
-    title: string;
-    description: string;
-  };
+  profile: { initials: string; name: string | null };
+  welcome: { eyebrow: string; title: string; description: string };
   day: {
     weekday: string;
     number: string;
@@ -79,185 +77,25 @@ const WEATHER_ICONS: Record<string, string> = {
   'Céu limpo': 'wb_sunny',
   'Parcialmente nublado': 'partly_cloudy_day',
   Nublado: 'cloud',
-  Nevoeiro: 'foggy',
-  Garoa: 'rainy',
-  'Garoa congelante': 'rainy',
   Chuva: 'rainy',
-  'Chuva congelante': 'rainy',
-  Neve: 'weather_snowy',
-  'Pancadas de chuva': 'rainy',
-  'Pancadas de neve': 'weather_snowy',
-  Trovoada: 'thunderstorm',
-  'Trovoada com granizo': 'thunderstorm',
 };
 
-function currentDayData(weather: WeatherResponse | null): HomeDashboardData['day'] {
-  const today = new Date();
-  const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(today);
-  const month = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(today).replace('.', '');
-
-  return {
-    weekday: `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}`,
-    number: String(today.getDate()).padStart(2, '0'),
-    month: `${month.charAt(0).toUpperCase()}${month.slice(1)}`,
-    weatherIcon: weather ? (WEATHER_ICONS[weather.condition] ?? 'cloud') : 'cloud_off',
-    temperature: weather
-      ? `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(weather.temperature)} °C`
-      : null,
-    city: weather?.city ?? null,
-    weatherCondition: weather?.condition ?? null,
-    greeting: null,
-  };
+function tone(category: string): string {
+  return category === 'personal'
+    ? 'personal'
+    : category === 'health' || category === 'habit'
+      ? 'wellbeing'
+      : 'work';
 }
 
-function createUnknownSegments(): HomeDashboardData['availableTime']['segments'] {
-  return Array.from({ length: PLANNER_SLOT_COUNT }, (_, index) => ({
-    id: index + 1,
-    status: 'unknown' as const,
-    label: 'Null',
-  }));
-}
-
-function timeSegments(
-  availability: PlannerDayAvailability,
-): HomeDashboardData['availableTime']['segments'] {
-  return availability.slots.map((slot, index) => ({
-    id: index + 1,
-    status: slot.available ? 'free' : 'busy',
-    label: `${slot.startTime} a ${slot.endTime}`,
-  }));
-}
-
-function availableTime(
-  events: PlannerEvent[] | null,
-  backendAvailability: PlannerDayAvailability | null,
-  today: Date,
-): HomeDashboardData['availableTime'] {
-  const availability =
-    backendAvailability ?? (events ? getPlannerDayAvailability(dateKey(today), events) : null);
-
-  if (availability === null) {
-    return {
-      label: 'TEMPO DISPONÍVEL',
-      value: null,
-      description: null,
-      segments: createUnknownSegments(),
-    };
-  }
-
-  return {
-    label: 'TEMPO DISPONÍVEL',
-    value: `${availability.availableHours}h`,
-    description: `${availability.availableBlocks} de ${availability.totalBlocks} blocos livres`,
-    segments: timeSegments(availability),
-  };
-}
-
-function currentFocus(tasks: Task[] | null): HomeDashboardData['focus'] {
-  const task = tasks?.find((item) => !item.completed);
-
-  return {
-    label: 'FOCO DE HOJE',
-    title: task?.title ?? null,
-    description: task?.notes ?? null,
-    progressLabel: 'Progresso',
-    progress: task ? 0 : null,
-    actionLabel: 'Abrir tarefas',
-  };
-}
-
-function eventTone(category: string): string {
-  if (category === 'personal') return 'personal';
-  if (category === 'health' || category === 'habit') return 'wellbeing';
-  return 'work';
-}
-
-function agenda(
-  calendarEvents: CalendarEvent[] | null,
-  plannerEvents: PlannerEvent[] | null,
-  today: Date,
-): HomeDashboardData['agenda'] {
-  if (calendarEvents === null && plannerEvents === null) {
-    return { title: 'Agenda de hoje', countLabel: null, events: [] };
-  }
-
-  const todayKey = dateKey(today);
-  const items = [
-    ...(calendarEvents ?? [])
-      .filter((event) => event.date === todayKey)
-      .map((event) => ({
-        id: `calendar-${event.id}`,
-        time: event.startTime,
-        title: event.title,
-        category: event.category,
-        tone: eventTone(event.category),
-      })),
-    ...(plannerEvents ?? [])
-      .filter((event) => event.date === todayKey)
-      .map((event) => ({
-        id: `planner-${event.id}`,
-        time: event.startTime,
-        title: event.title,
-        category: event.category,
-        tone: eventTone(event.category),
-      })),
-  ].sort((first, second) => first.time.localeCompare(second.time));
-
-  return {
-    title: 'Agenda de hoje',
-    countLabel: `${items.length} ${items.length === 1 ? 'evento' : 'eventos'}`,
-    events: items,
-  };
-}
-
-function habitItems(habits: Habit[] | null, today: Date): HomeDashboardData['habits']['items'] {
-  if (habits === null) return [];
-
-  const todayKey = dateKey(today);
-  return habits
-    .filter((habit) => habit.status === 'active')
-    .map((habit) => {
-      const completed = habit.completedDates.includes(todayKey);
-      return {
-        id: habit.id,
-        icon: habit.icon,
-        name: habit.name,
-        value: completed ? '1/1' : '0/1',
-        progress: completed ? 100 : 0,
-      };
-    });
-}
-
-function summary(
-  tasks: Task[] | null,
-  habits: Habit[] | null,
-): HomeDashboardData['daySummary']['metrics'] {
-  const completed = tasks?.filter((task) => task.completed).length;
-  const habitSummary = habits === null ? null : calculateHabitSummary(habits);
-
-  return [
-    {
-      id: 1,
-      icon: 'task_alt',
-      value: tasks === null ? null : `${completed}/${tasks.length}`,
-      label: 'tarefas concluídas',
-    },
-    { id: 2, icon: 'psychology', value: null, label: 'foco profundo' },
-    {
-      id: 3,
-      icon: 'local_fire_department',
-      value: habitSummary === null ? null : String(habitSummary.highestCurrentStreak),
-      label: 'dias de sequência',
-    },
-  ];
-}
-
-function createDashboardData(
-  data: HomeBackendData,
+function dashboard(
+  data: BackendDashboard | null,
   weather: WeatherResponse | null,
 ): HomeDashboardData {
-  const today = new Date();
-
+  const date = (data ? parseLocalDate(data.date) : null) ?? new Date();
+  const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date);
+  const month = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(date).replace('.', '');
+  const availability = data?.planner.availability;
   return {
     appName: 'Sereno',
     pageName: 'Início',
@@ -267,63 +105,110 @@ function createDashboardData(
       title: 'Um dia de cada vez.',
       description: 'Uma visão calma do que importa agora, sem perder de vista o seu ritmo.',
     },
-    day: currentDayData(weather),
-    availableTime: availableTime(data.plannerEvents, data.plannerAvailability, today),
-    focus: currentFocus(data.tasks),
-    agenda: agenda(data.calendarEvents, data.plannerEvents, today),
+    day: {
+      weekday: weekday[0].toUpperCase() + weekday.slice(1),
+      number: String(date.getDate()).padStart(2, '0'),
+      month: month[0].toUpperCase() + month.slice(1),
+      weatherIcon: weather ? (WEATHER_ICONS[weather.condition] ?? 'cloud') : 'cloud_off',
+      temperature: weather ? `${weather.temperature} °C` : null,
+      city: weather?.city ?? null,
+      weatherCondition: weather?.condition ?? null,
+      greeting: null,
+    },
+    availableTime: {
+      label: 'TEMPO DISPONÍVEL',
+      value: availability ? `${availability.availableHours}h` : null,
+      description: availability
+        ? `${availability.availableBlocks} de ${availability.totalBlocks} blocos livres`
+        : null,
+      segments: availability
+        ? availability.slots.map((slot, index) => ({
+            id: index + 1,
+            status: slot.available ? 'free' : 'busy',
+            label: `${slot.startTime} a ${slot.endTime}`,
+          }))
+        : [],
+    },
+    focus: {
+      label: 'FOCO DE HOJE',
+      title: data?.focus?.title ?? null,
+      description: data?.focus?.description ?? null,
+      progressLabel: 'Progresso',
+      progress: data?.focus?.progress ?? null,
+      actionLabel: 'Abrir tarefas',
+    },
+    agenda: {
+      title: 'Agenda de hoje',
+      countLabel: data ? `${data.planner.events.length} eventos` : null,
+      events: (data?.planner.events ?? []).map((event) => ({
+        id: String(event.id),
+        time: event.startTime,
+        title: event.title,
+        category: event.category,
+        tone: tone(event.category),
+      })),
+    },
     habits: {
       title: 'Hábitos',
       todayLabel: 'Hoje',
-      emptyLabel: data.habits === null ? 'Null' : 'Nenhum hábito ativo',
-      items: habitItems(data.habits, today),
+      emptyLabel: data ? 'Nenhum hábito para hoje' : 'Hábitos indisponíveis',
+      items: (data?.habits ?? []).map((habit) => ({
+        id: habit.id,
+        icon: habit.icon,
+        name: habit.name,
+        value: `${habit.completed}/${habit.target}`,
+        progress: habit.progress,
+      })),
     },
     daySummary: {
       title: 'Resumo do dia',
       expandLabel: 'Ver resumo completo',
-      metrics: summary(data.tasks, data.habits),
+      metrics: [
+        {
+          id: 1,
+          icon: 'task_alt',
+          value: data ? `${data.summary.completedTasks}/${data.summary.totalTasks}` : null,
+          label: 'tarefas concluídas',
+        },
+        { id: 2, icon: 'psychology', value: null, label: 'foco profundo' },
+        {
+          id: 3,
+          icon: 'local_fire_department',
+          value: data ? String(data.summary.highestCurrentStreak) : null,
+          label: 'dias de sequência',
+        },
+      ],
     },
   };
 }
-
-const INITIAL_BACKEND_DATA: HomeBackendData = {
-  tasks: null,
-  plannerEvents: null,
-  plannerAvailability: null,
-  habits: null,
-  calendarEvents: null,
-};
 
 @Injectable({ providedIn: 'root' })
 export class HomeDashboardService {
   private readonly api = inject(ApiClient);
   private readonly weatherService = inject(WeatherService);
-  private readonly backendData = signal<HomeBackendData>(INITIAL_BACKEND_DATA);
-
-  readonly dashboard = computed(() =>
-    createDashboardData(this.backendData(), this.weatherService.weather()),
-  );
+  private pending?: Subscription;
+  private readonly backendData = signal<BackendDashboard | null>(null);
+  readonly error = signal<string | null>(null);
+  readonly loading = signal(false);
+  readonly dashboard = computed(() => dashboard(this.backendData(), this.weatherService.weather()));
   readonly weatherLoading = this.weatherService.loading;
   readonly weatherError = this.weatherService.error;
 
   load(): void {
     this.weatherService.load();
-    const today = dateKey(new Date());
-    forkJoin({
-      tasks: this.requestList<Task>(SCHEDULE_TASKS_LIST_RESOURCE),
-      plannerEvents: this.requestList<PlannerEvent>('planner/events'),
-      plannerAvailability: this.requestPlannerAvailability(today),
-      habits: this.requestList<Habit>('habits'),
-      calendarEvents: this.requestList<CalendarEvent>('calendar-events'),
-    }).subscribe((data) => this.backendData.set(data));
-  }
-
-  private requestList<T>(resource: string) {
-    return this.api.getAll<T>(resource).pipe(catchError(() => of<T[] | null>(null)));
-  }
-
-  private requestPlannerAvailability(date: string) {
-    return this.api
-      .get<PlannerDayAvailability>(`planner/availability?date=${encodeURIComponent(date)}`)
-      .pipe(catchError(() => of<PlannerDayAvailability | null>(null)));
+    this.pending?.unsubscribe();
+    this.loading.set(true);
+    this.error.set(null);
+    this.pending = this.api.get<BackendDashboard>('home/dashboard').subscribe({
+      next: (value) => {
+        this.backendData.set(value);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.backendData.set(null);
+        this.loading.set(false);
+        this.error.set('Não foi possível carregar o resumo. Tente novamente.');
+      },
+    });
   }
 }

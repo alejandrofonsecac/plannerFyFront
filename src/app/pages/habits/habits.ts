@@ -23,7 +23,7 @@ interface HabitTab {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Habits {
-  private readonly habitService = inject(HabitService);
+  readonly habitService = inject(HabitService);
   private readonly categoryService = inject(CategoryService);
 
   readonly habits = this.habitService.habits;
@@ -79,18 +79,14 @@ export class Habits {
     this.editingHabit.set(null);
   }
 
-  saveHabit(draft: HabitDraft): void {
+  async saveHabit(draft: HabitDraft): Promise<void> {
     const habit = this.editingHabit();
-    if (habit) {
-      this.habitService.update(habit.id, draft);
-    } else {
-      this.habitService.create(draft);
-    }
-    this.closeDrawer();
+    const saved = await (habit ? this.habitService.update(habit.id, draft) : this.habitService.create(draft));
+    if (saved) this.closeDrawer();
   }
 
-  toggleHabitStatus(habit: Habit): void {
-    this.habitService.toggleStatus(habit.id);
+  async toggleHabitStatus(habit: Habit): Promise<void> {
+    await this.habitService.toggleStatus(habit.id);
   }
 
   requestDelete(habit: Habit): void {
@@ -105,11 +101,10 @@ export class Habits {
     if (event.target === event.currentTarget) this.cancelDelete();
   }
 
-  confirmDelete(): void {
+  async confirmDelete(): Promise<void> {
     const habit = this.deleteCandidate();
     if (!habit) return;
 
-    this.habitService.remove(habit.id);
-    this.deleteCandidate.set(null);
+    if (await this.habitService.remove(habit.id)) this.deleteCandidate.set(null);
   }
 }

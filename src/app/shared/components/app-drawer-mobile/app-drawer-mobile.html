@@ -58,5 +58,9 @@
           </div>
         </section>
       }
+      <section class="app-drawer-mobile__section">
+        <h2>{{ auth.user()?.name }}</h2>
+        <button type="button" class="app-drawer-mobile__link" (click)="auth.logout()"><mat-icon aria-hidden="true">logout</mat-icon><span>Sair da conta</span></button>
+      </section>
     </nav>
 </aside>

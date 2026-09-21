@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, input, output, viewChild } from '@angular/core';
+import { AuthSession } from '../../../core/auth/session/auth-session.service';
+import { inject, ChangeDetectionStrategy, Component, ElementRef, HostListener, input, output, viewChild } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AppLogo } from '../app-logo/app-logo';
@@ -13,6 +14,7 @@ import { NavigationSectionsModel } from '../sidebar/models/NavigationSectionsMod
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppDrawerMobile {
+  readonly auth = inject(AuthSession);
   readonly open = input(false);
   readonly suspended = input(false);
   readonly sections = input.required<readonly NavigationSectionsModel[]>();

@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, effect, inject, input, signal, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { catchError, of } from 'rxjs';
-import { DemoDataStore } from '@app/core/data-access/demo-data-store.service';
 import { type LayoutTier, type Task, TaskPriority } from '@pages/schedule/models';
 import { TaskForm } from './task-form/task-form';
 import { TasksService } from '@pages/schedule/services/tasks.service';
@@ -50,7 +49,6 @@ const TIER_ICON_CLASSES: Record<LayoutTier, string> = {
 })
 export class Tasks implements OnInit {
   private readonly tasksService = inject(TasksService);
-  private readonly demoDataStore = inject(DemoDataStore);
 
   layoutTier = input<LayoutTier>('balanced');
   newTaskRequest = input(0);
@@ -80,16 +78,7 @@ export class Tasks implements OnInit {
       .getTasks()
       .pipe(catchError(() => of([])))
       .subscribe((tasks) => {
-        const displayedTasks = tasks.length
-          ? tasks
-          : this.demoDataStore.getOrCreateList<Task>('schedule-tasks', () => ({
-              id: 1,
-              title: 'Exemplo de tarefa',
-              priority: TaskPriority.NORMAL,
-              dueLabel: 'Hoje',
-              completed: false,
-            }));
-        this.tasks.set(displayedTasks);
+        this.tasks.set(tasks);
       });
   }
 
@@ -125,11 +114,9 @@ export class Tasks implements OnInit {
     }
 
     const completed = !task.completed;
-    this.tasks.update((list) => list.map((t) => (t.id === id ? { ...t, completed } : t)));
     this.tasksService
       .updateTask(id, { completed })
-      .pipe(catchError(() => of({ ...task, completed })))
-      .subscribe();
+      .subscribe({ next: (updated) => this.tasks.update((list) => list.map((item) => item.id === id ? updated : item)) });
   }
 
   openNewTaskDialog() {
@@ -141,14 +128,8 @@ export class Tasks implements OnInit {
   }
 
   addTask(task: Omit<Task, 'id'>) {
-    const fallbackTask: Task = {
-      ...task,
-      id: Math.max(0, ...this.tasks().map((item) => item.id)) + 1,
-    };
-
     this.tasksService
       .createTask(task)
-      .pipe(catchError(() => of(fallbackTask)))
       .subscribe((newTask) => this.tasks.update((list) => [...list, newTask]));
   }
 

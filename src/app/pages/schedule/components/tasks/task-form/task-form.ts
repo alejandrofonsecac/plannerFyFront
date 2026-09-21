@@ -2,7 +2,7 @@
 import { type AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { TaskPriority, type Task } from '@pages/schedule/models';
-import { dateKey, parseLocalDate } from '@pages/schedule/utils';
+import { parseLocalDate } from '@pages/schedule/utils';
 
 @Component({
   selector: 'app-task-form',
@@ -37,26 +37,12 @@ export class TaskForm {
     this.saveForm.emit({
       title: value.title,
       priority: value.priority,
-      dueLabel: this.getDueLabel(value.dueDate, value.dueTime),
+      dueDate: value.dueDate || null,
+      dueTime: value.dueTime || null,
       notes: value.notes || undefined,
       completed: value.completed,
     });
     this.onClose();
-  }
-
-  private getDueLabel(date: string, time: string): string {
-    const parsed = parseLocalDate(date);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dateLabel = !parsed
-      ? ''
-      : date === dateKey(today)
-        ? 'Hoje'
-        : date === dateKey(tomorrow)
-          ? 'Amanhã'
-          : parsed.toLocaleDateString('pt-BR');
-    return [dateLabel, time].filter(Boolean).join(', ') || 'Sem data';
   }
 
   onClose(): void {
