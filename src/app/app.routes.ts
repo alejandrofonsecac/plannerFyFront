@@ -1,13 +1,16 @@
 import { Routes } from '@angular/router';
+import { authGuard, authChildGuard, guestGuard } from './core/auth/routing/auth.guard';
 import { Calendar, Files, Goals, Habits, Home, Login, Notes, Projects, Schedule } from './pages';
 import { AppShell } from './shared/components/app-shell/app-shell';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
-  { path: 'login', component: Login, data: { title: 'Login' } },
+  { path: 'login', component: Login, canActivate: [guestGuard], data: { title: 'Login' } },
   {
     path: '',
     component: AppShell,
+    canActivate: [authGuard],
+    canActivateChild: [authChildGuard],
     children: [
       {
         path: 'home',
