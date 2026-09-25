@@ -89,6 +89,11 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "host": "localhost",
+            "port": 4200,
+            "proxyConfig": "config/proxy/proxy.conf.cjs"
+          },
           "configurations": {
             "production": {
               "buildTarget": "AgendaFrontend:build:production"

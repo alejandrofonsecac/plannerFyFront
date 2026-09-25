@@ -69,6 +69,8 @@ describe('authentication boundary', () => {
       const request = http.expectOne('http://localhost:8080/users/' + mode);
       expect(request.request.method).toBe('POST');
       expect(request.request.headers.has('Authorization')).toBe(false);
+      expect(request.request.headers.get('X-PlannerFy-Session')).toBe('1');
+      expect(request.request.withCredentials).toBe(true);
       expect(request.request.body).toEqual(
         mode === 'register'
           ? { name: 'Ana', email: 'ana@example.com', password: ' secret-password ' }
@@ -214,6 +216,8 @@ describe('authentication boundary', () => {
   });
 
   it('shows controlled errors without exposing server messages', () => {
+    expect(authErrorMessage(new HttpErrorResponse({ status: 426 }), 'login')).toContain('HTTPS');
+    expect(authErrorMessage(new HttpErrorResponse({ status: 403 }), 'login')).toContain('recusou');
     const error = new HttpErrorResponse({
       status: 401,
       error: { message: 'database password secret' },

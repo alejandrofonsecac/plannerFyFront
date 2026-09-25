@@ -1,71 +1,36 @@
-# AgendaFrontend
+﻿# PlannerFy Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.14.
+Frontend Angular da aplicação de produtividade PlannerFy. O backend `api-workspace`
+é responsável por autenticação, persistência e regras de negócio.
 
-## Development server
+## Desenvolvimento
 
-To start a local development server, run:
+Inicie o backend localmente conforme o
+[guia de desenvolvimento](docs/HTTPS_SETUP.md). Depois:
 
-```bash
-ng serve
+```powershell
+npm ci
+npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Abra **http://localhost:4200**. As chamadas `/api` passam pelo proxy em
+[`config/proxy/`](config/proxy/). Certificados e chaves locais são ignorados pelo Git.
 
-## Code scaffolding
+## Validação
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```powershell
+npm run test:proxy
+npm test -- --watch=false
+npm run lint
+npm run build
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+O build de produção é gerado em `dist/`. O servidor Angular de desenvolvimento
+não é um servidor de hospedagem para produção.
 
-```bash
-ng generate --help
-```
+## Documentação
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-
-## AutenticaÃ§Ã£o
-
-Login e cadastro estÃ£o conectados Ã  API. Consulte [AUTHENTICATION.md](AUTHENTICATION.md) para configuraÃ§Ã£o, seguranÃ§a e testes. A sessÃ£o fica em memÃ³ria; recarregar a pÃ¡gina exige novo login.
-
-## Contexto de desenvolvimento
-
-Consulte [AGENTS.md](AGENTS.md) antes de alterar o projeto. O documento define o backend como responsÃ¡vel pelas regras de negÃ³cio e pelos cÃ¡lculos oficiais, a divisÃ£o de responsabilidades e os padrÃµes de cÃ³digo compartilhados com o repositÃ³rio api-workspace.
-
-## Regras de negócio
-
-Consulte [BUSINESS_RULES.md](BUSINESS_RULES.md) para os contratos migrados e a pendência de recuperação das migrations V1/V2 antes da implantação.
+- [Índice de documentação](docs/README.md)
+- [HTTPS e proxy](docs/HTTPS_SETUP.md)
+- [Autenticação e limitações da sessão](docs/AUTHENTICATION.md)
+- [Guia de desenvolvimento](AGENTS.md)

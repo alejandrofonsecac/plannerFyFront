@@ -20,7 +20,12 @@ export class AuthService implements AuthGateway {
         ? { name: credentials.name.trim(), email, password: credentials.password }
         : { email, password: credentials.password };
     const response = await firstValueFrom(
-      this.http.post<AuthResponse>(`${this.baseUrl}/users/${mode}`, body).pipe(timeout(15_000)),
+      this.http
+        .post<AuthResponse>(`${this.baseUrl}/users/${mode}`, body, {
+          headers: { 'X-PlannerFy-Session': '1' },
+          withCredentials: true,
+        })
+        .pipe(timeout(15_000)),
     );
     this.session.start(response);
   }
@@ -33,6 +38,10 @@ export class AuthService implements AuthGateway {
 /** Do not display server exceptions or echo request bodies containing passwords. */
 export function authErrorMessage(error: unknown, mode: AuthMode): string {
   if (error instanceof HttpErrorResponse) {
+    if (error.status === 426)
+      return 'O servidor exige HTTPS. Acesse o PlannerFy pela conexão segura configurada.';
+    if (error.status === 403)
+      return 'O servidor recusou a solicitação. Verifique a configuração de acesso da aplicação.';
     if (error.status === 401) return 'Email ou senha incorretos.';
     if (error.status === 409 && mode === 'register')
       return 'Este email já está cadastrado. Entre na sua conta.';
