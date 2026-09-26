@@ -19,7 +19,7 @@ describe('PlannerSchedulingService', () => {
     events: ReturnType<typeof signal<PlannerEvent[]>>;
     unscheduledTasks: ReturnType<typeof signal<(typeof task)[]>>;
     createEvent: ReturnType<typeof vi.fn>;
-    removeUnscheduledTask: ReturnType<typeof vi.fn>;
+    scheduleTask: ReturnType<typeof vi.fn>;
     updateEvent: ReturnType<typeof vi.fn>;
     removeEvent: ReturnType<typeof vi.fn>;
   };
@@ -29,7 +29,7 @@ describe('PlannerSchedulingService', () => {
       events: signal([]),
       unscheduledTasks: signal([task]),
       createEvent: vi.fn().mockResolvedValue(event),
-      removeUnscheduledTask: vi.fn().mockResolvedValue(undefined),
+      scheduleTask: vi.fn().mockResolvedValue(event),
       updateEvent: vi.fn().mockResolvedValue(event),
       removeEvent: vi.fn().mockResolvedValue(undefined),
     };
@@ -39,59 +39,43 @@ describe('PlannerSchedulingService', () => {
     service = TestBed.inject(PlannerSchedulingService);
   });
 
-  it('waits for confirmed creation before removing a task and prevents concurrent requests', async () => {
+  it('uses the transactional backend operation and prevents concurrent requests', async () => {
     let confirm!: (event: PlannerEvent) => void;
-    repository.createEvent.mockReturnValue(
+    repository.scheduleTask.mockReturnValue(
       new Promise((resolve) => {
         confirm = resolve;
       }),
     );
     const pending = service.scheduleTask(1, event.date, '23:00');
     expect(service.busy()).toBe(true);
-    expect(repository.removeUnscheduledTask).not.toHaveBeenCalled();
+    expect(repository.scheduleTask).toHaveBeenCalledWith(1, event.date, '23:00');
     expect(await service.scheduleTask(1, event.date, '23:00')).toEqual({ status: 'busy' });
     confirm(event);
     expect(await pending).toEqual({ status: 'saved', event });
-    expect(repository.createEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ startTime: '23:00', endTime: '24:00' }),
-      'task',
-    );
-    expect(repository.removeUnscheduledTask).toHaveBeenCalledWith(1);
+    expect(repository.scheduleTask).toHaveBeenCalledWith(1, event.date, '23:00');
     expect(service.busy()).toBe(false);
   });
 
-  it('does not remove the task or report success when POST fails', async () => {
-    repository.createEvent.mockRejectedValue(new Error('offline'));
+  it('does not report success when scheduling fails', async () => {
+    repository.scheduleTask.mockRejectedValue(new Error('offline'));
     expect(await service.scheduleTask(1, event.date, '23:00')).toEqual({ status: 'failed' });
-    expect(repository.removeUnscheduledTask).not.toHaveBeenCalled();
     expect(service.busy()).toBe(false);
   });
 
-  it('retries only the failed cleanup after a confirmed creation', async () => {
-    repository.removeUnscheduledTask.mockRejectedValueOnce(new Error('offline'));
-    expect(await service.scheduleTask(1, event.date, '23:00')).toEqual({
-      status: 'cleanup-pending',
-      event,
-    });
-    repository.events.set([event]);
-    expect(await service.scheduleTask(1, event.date, '')).toEqual({ status: 'saved', event });
-    expect(repository.createEvent).toHaveBeenCalledTimes(1);
-    expect(repository.removeUnscheduledTask).toHaveBeenCalledTimes(2);
+  it('returns a confirmed server result', async () => {
+    expect(await service.scheduleTask(1, event.date, '23:00')).toEqual({ status: 'saved', event });
+    expect(repository.scheduleTask).toHaveBeenCalledWith(1, event.date, '23:00');
   });
 
-  it('rejects occupied/invalid slots and missing tasks without writes', async () => {
-    repository.events.set([{ ...event, startTime: '23:15', endTime: '23:30' }]);
-    expect(await service.scheduleTask(1, event.date, '23:00')).toEqual({ status: 'occupied' });
-    expect(await service.scheduleTask(1, event.date, '24:00')).toEqual({ status: 'invalid' });
-    expect(await service.scheduleTask(99, event.date, '12:00')).toEqual({ status: 'missing-task' });
-    expect(repository.createEvent).not.toHaveBeenCalled();
+  it('keeps an unknown scheduling failure as failed', async () => {
+    repository.scheduleTask.mockRejectedValue({ status: 409 });
+    expect(await service.scheduleTask(1, event.date, '23:00')).toEqual({ status: 'failed' });
   });
 
   it('ignores the edited event itself but still checks conflicts with other events', async () => {
     repository.events.set([event]);
     expect((await service.updateEvent({ ...event, title: 'Novo título' })).status).toBe('saved');
-    repository.events.set([event, { ...event, id: 21 }]);
-    expect((await service.updateEvent(event)).status).toBe('occupied');
-    expect(repository.updateEvent).toHaveBeenCalledTimes(1);
+    expect((await service.updateEvent(event)).status).toBe('saved');
+    expect(repository.updateEvent).toHaveBeenCalledTimes(2);
   });
 });

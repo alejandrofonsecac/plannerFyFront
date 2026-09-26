@@ -1,3 +1,4 @@
+import { AuthSession } from '../../../core/auth/session/auth-session.service';
 import { Component, computed, HostListener, inject, OnDestroy, output, signal } from '@angular/core';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { RouterLink, RouterLinkActive } from '@angular/router';
@@ -23,6 +24,8 @@ const SIDEBAR_WIDTH_STORAGE_KEY = 'agenda.sidebar-width';
   },
 })
 export class Sidebar implements OnDestroy {
+  readonly auth = inject(AuthSession);
+  readonly roleLabel = computed(() => ({ USER: 'Conta pessoal', USER_PLUS: 'Conta Plus', ADMIN: 'Administrador' })[this.auth.user()?.role ?? 'USER']);
   private readonly iconRegistry = inject(MatIconRegistry);
   private readonly sidebarState = inject(SidebarState);
   private resizeMoveListener?: (event: PointerEvent) => void;

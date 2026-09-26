@@ -14,25 +14,7 @@ import { dateKey, toMinutes } from '@pages/schedule/utils';
 export class PlannerNextActivityCard {
   private readonly clock = inject(LocalClockService);
   readonly date = input.required<Date>();
-  readonly events = input<PlannerEvent[]>([]);
-  readonly nextActivity = computed(() => {
-    const selectedDate = dateKey(this.date());
-    const today = dateKey(this.clock.now());
-
-    if (selectedDate < today) {
-      return null;
-    }
-
-    const minimumTime =
-      selectedDate === today ? this.clock.now().getHours() * 60 + this.clock.now().getMinutes() : 0;
-    return (
-      [...this.events()]
-        .sort((first, second) => toMinutes(first.startTime) - toMinutes(second.startTime))
-        .find(
-          (event) => event.date === selectedDate && toMinutes(event.startTime) >= minimumTime,
-        ) ?? null
-    );
-  });
+  readonly nextActivity = input<PlannerEvent | null>(null);
   readonly startsInLabel = computed(() => {
     const activity = this.nextActivity();
     if (!activity) {

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { Habit } from '../../models/habit';
-import { buildHeatmap, calculateHabitMetrics } from '../../utils/habit-metrics';
+import { buildHeatmap } from '../../utils/habit-metrics';
 
 @Component({
   selector: 'app-habit-card',
@@ -17,7 +17,7 @@ export class HabitCard {
   readonly statusChange = output<Habit>();
   readonly expanded = signal(false);
 
-  readonly metrics = computed(() => calculateHabitMetrics(this.habit()));
+  readonly metrics = computed(() => this.habit().metrics);
   readonly miniHeatmap = computed(() => buildHeatmap(this.habit(), 21));
   readonly fullHeatmap = computed(() => buildHeatmap(this.habit(), 60));
 

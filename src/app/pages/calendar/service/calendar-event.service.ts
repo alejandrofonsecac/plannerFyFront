@@ -1,80 +1,66 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { catchError, finalize, of } from 'rxjs';
+import { firstValueFrom, Observable, Subscription } from 'rxjs';
 import { ApiClient, withoutId } from '../../../core/data-access/api-client.service';
-import { DemoDataStore } from '../../../core/data-access/demo-data-store.service';
 import { CalendarEvent, CalendarEventDraft } from '../models';
-import { toDateKey } from '../calendar.utils';
-
-const RESOURCE = 'calendar-events';
-
-function createDemoEvent(): CalendarEvent {
-  return {
-    id: 'demo-calendar-event',
-    title: 'Exemplo de evento',
-    date: toDateKey(new Date()),
-    startTime: '09:00',
-    endTime: '10:00',
-    description: 'Registro de demonstração exibido apenas quando a API não retorna eventos.',
-    source: 'internal',
-    category: 'personal',
-  };
-}
 
 @Injectable({ providedIn: 'root' })
 export class CalendarEventService {
   private readonly api = inject(ApiClient);
-  private readonly demoDataStore = inject(DemoDataStore);
+  private pendingLoad?: Subscription;
 
   readonly events = signal<CalendarEvent[]>([]);
   readonly loading = signal(false);
+  readonly saving = signal(false);
+  readonly error = signal<string | null>(null);
 
   constructor() {
     this.load();
   }
 
   load(): void {
+    this.pendingLoad?.unsubscribe();
     this.loading.set(true);
-
-    this.api
-      .getAll<CalendarEvent>(RESOURCE)
-      .pipe(
-        catchError(() => of([])),
-        finalize(() => this.loading.set(false)),
-      )
-      .subscribe((events) => {
-        this.events.set(
-          events.length ? events : this.demoDataStore.getOrCreateList(RESOURCE, createDemoEvent),
-        );
-      });
+    this.error.set(null);
+    this.pendingLoad = this.api.getAll<CalendarEvent>('calendar/events').subscribe({
+      next: (events) => {
+        this.events.set(events);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('Não foi possível carregar o calendário. Tente novamente.');
+      },
+    });
   }
 
-  create(draft: CalendarEventDraft): void {
-    const event: CalendarEvent = {
-      id: `local-${Date.now()}`,
-      ...draft,
-    };
-
-    this.api
-      .post<CalendarEvent, CalendarEventDraft>(RESOURCE, draft)
-      .pipe(catchError(() => of(event)))
-      .subscribe((createdEvent) => this.events.update((items) => [...items, createdEvent]));
+  create(draft: CalendarEventDraft): Promise<boolean> {
+    return this.mutate(this.api.post('events', draft));
   }
 
-  update(event: CalendarEvent): void {
-    this.api
-      .put<CalendarEvent, CalendarEventDraft>(RESOURCE, event.id, withoutId(event))
-      .pipe(catchError(() => of(event)))
-      .subscribe((updatedEvent) =>
-        this.events.update((items) =>
-          items.map((item) => (item.id === updatedEvent.id ? updatedEvent : item)),
-        ),
+  update(event: CalendarEvent): Promise<boolean> {
+    return this.mutate(this.api.put('events', event.id, withoutId(event)));
+  }
+
+  remove(id: CalendarEvent['id']): Promise<boolean> {
+    return this.mutate(this.api.delete('events', id));
+  }
+
+  private async mutate(request: Observable<unknown>): Promise<boolean> {
+    if (this.saving()) return false;
+    this.saving.set(true);
+    this.error.set(null);
+
+    try {
+      await firstValueFrom(request);
+      this.load();
+      return true;
+    } catch {
+      this.error.set(
+        'Não foi possível salvar. Verifique os dados e possíveis conflitos de horário.',
       );
-  }
-
-  remove(id: CalendarEvent['id']): void {
-    this.api
-      .delete(RESOURCE, id)
-      .pipe(catchError(() => of(undefined)))
-      .subscribe(() => this.events.update((items) => items.filter((item) => item.id !== id)));
+      return false;
+    } finally {
+      this.saving.set(false);
+    }
   }
 }

@@ -15,6 +15,7 @@ import { DailySummaryComponent } from '@pages/schedule/components/planner/sideba
 export class PlannerSidebar {
   readonly date = input.required<Date>();
   readonly events = input<PlannerEvent[]>([]);
+  readonly nextActivity = input<PlannerEvent | null>(null);
   readonly habits = input<PlannerHabit[]>([]);
   readonly taskCount = input(0);
   readonly eventCount = input(0);

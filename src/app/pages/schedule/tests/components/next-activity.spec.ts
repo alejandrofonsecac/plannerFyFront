@@ -12,7 +12,7 @@ describe('next activity clock', () => {
     });
     const fixture = TestBed.createComponent(PlannerNextActivityCard);
     fixture.componentRef.setInput('date', new Date(2026, 8, 12));
-    fixture.componentRef.setInput('events', [
+    const backendSummary = [
       {
         id: 1,
         title: 'Primeiro',
@@ -40,12 +40,15 @@ describe('next activity clock', () => {
         category: 'work',
         kind: 'event',
       },
-    ]);
+    ];
+    fixture.componentRef.setInput('nextActivity', backendSummary[0]);
     expect(fixture.componentInstance.nextActivity()?.id).toBe(1);
     now.set(new Date(2026, 8, 12, 10));
+    fixture.componentRef.setInput('nextActivity', backendSummary[1]);
     expect(fixture.componentInstance.nextActivity()?.id).toBe(2);
     expect(fixture.componentInstance.startsInLabel()).toBe('Começa em 1h');
     fixture.componentRef.setInput('date', new Date(2026, 8, 13));
+    fixture.componentRef.setInput('nextActivity', backendSummary[2]);
     expect(fixture.componentInstance.nextActivity()?.id).toBe(3);
   });
 });

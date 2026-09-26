@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { HttpErrorResponse } from '@angular/common/http';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Planning } from './planning';
 import { PlannerService } from '@pages/schedule/services/planner-services/planner.service';
@@ -12,8 +13,9 @@ describe('task scheduling across planner displays', () => {
   const service = {
     events: signal<PlannerEvent[]>([]),
     unscheduledTasks: signal([task]),
-    createEvent: vi.fn().mockResolvedValue({ id: 10, startTime: '23:00' }),
-    removeUnscheduledTask: vi.fn().mockResolvedValue(undefined),
+    summary: signal({ date: '2026-09-10', events: [], availability: { date: '2026-09-10', totalBlocks: 24, occupiedBlocks: 0, availableBlocks: 24, availableHours: 24, slots: [] }, taskCount: 1, eventCount: 0, plannedMinutes: 0, freeMinutes: 1440, freeTimePercentage: 100, nextActivity: null }),
+    loadSummary: vi.fn(),
+    scheduleTask: vi.fn().mockResolvedValue({ id: 10, startTime: '23:00', kind: 'task' }),
   };
 
   beforeEach(() => {
@@ -49,32 +51,13 @@ describe('task scheduling across planner displays', () => {
     const component = setup();
     component.selectedTask.set(task);
     await component.scheduleTask(task, '23:00');
-    expect(service.createEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        date: '2026-09-10',
-        startTime: '23:00',
-        endTime: '24:00',
-        title: 'Ler',
-      }),
-      'task',
-    );
-    expect(service.removeUnscheduledTask).toHaveBeenCalledWith(task.id);
+    expect(service.scheduleTask).toHaveBeenCalledWith(task.id, '2026-09-10', '23:00');
     expect(component.selectedTask()).toBeNull();
   });
 
   it('keeps the task unscheduled when the destination is occupied or the drop was cancelled', async () => {
     const component = setup();
-    service.events.set([
-      {
-        id: 2,
-        date: '2026-09-10',
-        title: 'Consulta',
-        startTime: '23:15',
-        endTime: '23:30',
-        kind: 'event',
-        category: 'health',
-      },
-    ]);
+    service.scheduleTask.mockRejectedValueOnce(new HttpErrorResponse({ status: 409 }));
     component.selectedTask.set(task);
     await component.scheduleTask(task, '23:00');
     expect(component.operationError()).toContain('ocupado');
@@ -86,7 +69,6 @@ describe('task scheduling across planner displays', () => {
       } as CdkDragDrop<unknown, PlannerTask[], PlannerTask>,
       '08:00',
     );
-    expect(service.createEvent).not.toHaveBeenCalled();
-    expect(service.removeUnscheduledTask).not.toHaveBeenCalled();
+    expect(service.scheduleTask).toHaveBeenCalledTimes(1);
   });
 });

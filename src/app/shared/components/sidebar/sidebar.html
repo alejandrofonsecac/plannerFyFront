@@ -68,15 +68,16 @@
 
   <footer class="sidebar-footer">
     <div class="sidebar-profile">
-      <span class="sidebar-avatar">SP<i></i></span>
+      <span class="sidebar-avatar">{{ auth.initials() }}<i></i></span>
       <div>
-        <span>Seu perfil</span>
-        <small>Plano Pro · Online</small>
+        <span>{{ auth.user()?.name }}</span>
+        <small>{{ roleLabel() }}</small>
       </div>
       <button type="button" (click)="settingsRequested.emit()" aria-label="Configurações do perfil" title="Configurações do perfil">
         <mat-icon class="sidebar-symbol sidebar-symbol--small">settings</mat-icon>
       </button>
     </div>
+    <button type="button" class="sidebar-nav-item" (click)="auth.logout()"><mat-icon aria-hidden="true">logout</mat-icon><span>Sair da conta</span></button>
   </footer>
 
   <button

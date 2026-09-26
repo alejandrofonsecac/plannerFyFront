@@ -1,3 +1,4 @@
+@if (auth.user()) {
 <div class="app-shell">
   <app-sidebar (settingsRequested)="openSettings()" />
 
@@ -23,3 +24,4 @@
     <app-settings-modal (dismissed)="closeSettings()" />
   }
 </div>
+}

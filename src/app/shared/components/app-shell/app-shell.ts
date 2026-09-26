@@ -1,4 +1,6 @@
 import { DOCUMENT } from '@angular/common';
+import { AuthSession } from '../../../core/auth/session/auth-session.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ChangeDetectionStrategy, Component, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -18,6 +20,7 @@ import { ThemeService } from '../../theme.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppShell {
+  readonly auth = inject(AuthSession);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -32,8 +35,8 @@ export class AppShell {
 
   constructor() {
     inject(ThemeService);
-    this.updatePageTitle();
-    this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(() => {
+    // Child route snapshots are ready after NavigationEnd, not during shell construction.
+    this.router.events.pipe(takeUntilDestroyed(), filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(() => {
       this.updatePageTitle();
       this.closeDrawer(false);
     });

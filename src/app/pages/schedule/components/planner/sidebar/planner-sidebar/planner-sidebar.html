@@ -6,7 +6,7 @@
     [plannedHours]="plannedHours()"
   />
 
-  <app-planner-next-activity-card [date]="date()" [events]="events()" />
+  <app-planner-next-activity-card [date]="date()" [nextActivity]="nextActivity()" />
 
   <app-planner-habits-card [habits]="habits()" (habitToggled)="habitToggled.emit($event)" />
 

@@ -30,11 +30,11 @@ describe('confirmed planner writes', () => {
   afterEach(() => http.verify());
 
   it('only adds an event after confirmation and sends no client-generated id', async () => {
-    const pending = service.createEvent(draft, 'task');
+    const pending = service.createEvent(draft);
     const request = http.expectOne('http://localhost:8080/planner/events');
-    expect(request.request.body).toEqual({ ...draft, kind: 'task' });
+    expect(request.request.body).toEqual({ ...draft, source: 'internal' });
     expect(service.events()).toEqual([]);
-    request.flush({ ...draft, kind: 'task', id: 77 });
+    request.flush({ ...draft, kind: 'event', id: 77 });
     expect((await pending).id).toBe(77);
     expect(service.events()[0].id).toBe(77);
   });
@@ -49,11 +49,11 @@ describe('confirmed planner writes', () => {
     expect(service.events()).toEqual([]);
   });
 
-  it('keeps a task visible when its deletion fails', async () => {
-    const pending = service.removeUnscheduledTask(1);
+  it('keeps a task visible when transactional scheduling fails', async () => {
+    const pending = service.scheduleTask(1, '2026-09-10', '23:00');
     const assertion = expect(pending).rejects.toMatchObject({ status: 500 });
     http
-      .expectOne((request) => request.method === 'DELETE')
+      .expectOne('http://localhost:8080/planner/tasks/1/schedule')
       .flush({}, { status: 500, statusText: 'Error' });
     await assertion;
     expect(service.unscheduledTasks()).toHaveLength(1);

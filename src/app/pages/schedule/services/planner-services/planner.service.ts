@@ -1,69 +1,64 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { catchError, finalize, firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, forkJoin, Subscription } from 'rxjs';
 import { ApiClient, withoutId } from '@app/core/data-access/api-client.service';
-import { DemoDataStore } from '@app/core/data-access/demo-data-store.service';
 import type {
-  PlannerCategory,
+  PlannerDaySummary,
   PlannerEvent,
   PlannerEventDraft,
   PlannerTask,
-  Task,
 } from '@pages/schedule/models';
-import { dateKey } from '@pages/schedule/utils';
-import {
-  SCHEDULE_TASKS_LIST_RESOURCE,
-  SCHEDULE_TASKS_RESOURCE,
-} from '@pages/schedule/services/schedule-tasks.endpoints';
 
 const EVENTS_RESOURCE = 'planner/events';
-const DEFAULT_TASK_CATEGORY: PlannerCategory = 'personal';
-
-function toPlannerTask(task: Task): PlannerTask {
-  return {
-    id: task.id,
-    title: task.title,
-    category: DEFAULT_TASK_CATEGORY,
-  };
-}
-
-function createDemoEvent(): PlannerEvent {
-  return {
-    id: 1,
-    date: dateKey(new Date()),
-    title: 'Exemplo de compromisso',
-    description: 'Evento de demonstração exibido somente sem dados da API.',
-    startTime: '09:00',
-    endTime: '10:00',
-    category: 'personal',
-    kind: 'event',
-  };
-}
-
 @Injectable({ providedIn: 'root' })
 export class PlannerService {
   private readonly api = inject(ApiClient);
-  private readonly demoDataStore = inject(DemoDataStore);
+  private pendingLoad?: Subscription;
 
   readonly events = signal<PlannerEvent[]>([]);
   readonly unscheduledTasks = signal<PlannerTask[]>([]);
   readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly summary = signal<PlannerDaySummary | null>(null);
 
   constructor() {
     this.load();
   }
 
   load(): void {
+    this.pendingLoad?.unsubscribe();
     this.loading.set(true);
-    this.loadEvents();
-    this.loadUnscheduledTasks();
+    this.error.set(null);
+    this.pendingLoad = forkJoin({
+      events: this.api.getAll<PlannerEvent>(EVENTS_RESOURCE),
+      tasks: this.api.getAll<PlannerTask>('planner/tasks'),
+    }).subscribe({
+      next: ({ events, tasks }) => {
+        this.events.set(events);
+        this.unscheduledTasks.set(tasks);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('Não foi possível carregar o planejamento. Tente novamente.');
+      },
+    });
+  }
+
+  loadSummary(date: string): void {
+    this.api.get<PlannerDaySummary>(`planner/summary?date=${encodeURIComponent(date)}`).subscribe({
+      next: (summary) => this.summary.set(summary),
+      error: () => this.error.set('Não foi possível carregar o resumo do planejamento. Tente novamente.'),
+    });
   }
 
   async createEvent(
     draft: PlannerEventDraft,
-    kind: PlannerEvent['kind'] = 'event',
   ): Promise<PlannerEvent> {
     const created = await firstValueFrom(
-      this.api.post<PlannerEvent, Omit<PlannerEvent, 'id'>>(EVENTS_RESOURCE, { ...draft, kind }),
+      this.api.post<PlannerEvent, PlannerEventDraft>(EVENTS_RESOURCE, {
+        ...draft,
+        source: draft.source ?? 'internal',
+      }),
     );
     this.events.update((items) => [...items, created]);
     return created;
@@ -86,31 +81,15 @@ export class PlannerService {
     this.events.update((items) => items.filter((item) => item.id !== id));
   }
 
-  async removeUnscheduledTask(id: number): Promise<void> {
-    await firstValueFrom(this.api.delete(SCHEDULE_TASKS_RESOURCE, id));
+  async scheduleTask(id: number, date: string, startTime: string): Promise<PlannerEvent> {
+    const event = await firstValueFrom(
+      this.api.post<PlannerEvent, { date: string; startTime: string }>(
+        `planner/tasks/${id}/schedule`,
+        { date, startTime },
+      ),
+    );
+    this.events.update((items) => [...items.filter((item) => item.id !== event.id), event]);
     this.unscheduledTasks.update((items) => items.filter((item) => item.id !== id));
-  }
-
-  private loadEvents(): void {
-    this.api
-      .getAll<PlannerEvent>(EVENTS_RESOURCE)
-      .pipe(catchError(() => of([])))
-      .subscribe((events) => {
-        this.events.set(
-          events.length
-            ? events
-            : this.demoDataStore.getOrCreateList('planner-events', createDemoEvent),
-        );
-      });
-  }
-
-  private loadUnscheduledTasks(): void {
-    this.api
-      .getAll<Task>(SCHEDULE_TASKS_LIST_RESOURCE)
-      .pipe(
-        catchError(() => of([])),
-        finalize(() => this.loading.set(false)),
-      )
-      .subscribe((tasks) => this.unscheduledTasks.set(tasks.map(toPlannerTask)));
+    return event;
   }
 }

@@ -1,71 +1,30 @@
-# AgendaFrontend
+# PlannerFy Frontend
 
-Frontend Angular de um app de agenda/produtividade pessoal (planner diário/semanal, tarefas, hábitos, metas, notas, projetos, calendário, arquivos). Backend é um serviço HTTP separado (não está neste repo) — hoje só `NotesService` consome API real (`http://localhost:8080/notes`); as demais páginas ainda operam com dados mockados/locais no componente.
+Leia [AGENTS.md](AGENTS.md) antes de alterar o projeto: ele contém as regras
+compartilhadas de arquitetura, contratos e segurança.
 
-## Stack
+## Referência rápida
 
-- **Angular 22** (standalone components, sem NgModules) + **Angular CLI**
-- **Angular Material** (`@angular/material`, `@angular/cdk`) para UI, `material-symbols` para ícones
-- **Tailwind CSS 4** (via `@tailwindcss/postcss`) + CSS puro por componente (`*.css` ao lado de cada `*.ts`/`*.html`)
-- **RxJS** para streams/HTTP
-- **animejs** para animações (motivo dos `esModuleInterop`/`allowSyntheticDefaultImports` no tsconfig)
-- **TypeScript strict mode** ligado (strict, noImplicitOverride, noImplicitReturns, noFallthroughCasesInSwitch, noPropertyAccessFromIndexSignature)
-- **Vitest** como test runner (`ng test`), **ESLint** (`angular-eslint` + `typescript-eslint` + `eslint-config-prettier`), **Prettier**
-- Sem NgRx nem store global — estado é local a cada componente/serviço (ver `sidebar-state.ts`, `theme.service.ts`)
+- Stack: Angular standalone, TypeScript strict, RxJS, signals, Angular Material/CDK e
+  Tailwind CSS 4.
+- Estrutura: `pages/` para funcionalidades, `core/` para infraestrutura e
+  autenticação, `shared/` para itens reutilizáveis. A autenticação é organizada em
+  `models/`, `data-access/`, `session/`, `routing/`, `http/` e `testing/`.
+- API: valide controllers e DTOs do backend antes de consumir. Não replique regras de
+  negócio no navegador nem transforme falhas de API em sucesso local.
+- Sessão: token somente em memória, enviado apenas à API configurada. Consulte
+  [AUTHENTICATION.md](AUTHENTICATION.md).
+- Agenda: consulte o [mapa da funcionalidade](src/app/pages/schedule/README.md) quando
+  trabalhar nela.
 
 ## Comandos
 
-```bash
-npm start      # ng serve — dev server em http://localhost:4200
-npm run build  # ng build — saída em dist/AgendaFrontend
-npm run watch  # build com watch, configuração development
-npm test       # ng test (Vitest)
-npm run lint   # ng lint
+```text
+npm start
+npm run build
+npm run lint
+npm test
 ```
 
-Não há testes e2e configurados.
-
-## Estrutura
-
-```
-src/app/
-  app.ts / app.html / app.routes.ts / app.config.ts   # root standalone component, rotas, providers (HttpClient, Router)
-  pages/            # uma pasta por feature/rota (component + .html + .css, às vezes models/ e service/ próprios)
-    home, login, habits, goals, notes, calendar, files, projects, config
-    schedule/       # feature mais complexa: planner diário/semanal
-      components/   # schedule-header, planner e tasks
-        planner/    # planning + views/, events/, sidebar/ e planner-unscheduled-tasks/
-        tasks/      # lista de tarefas e task-form/
-      services/     # planner, execução de hábitos, tarefas e endpoints compartilhados
-      models/        # PlannerEvent, PlannerTask, PlannerHabit, Task, TaskPriority e contratos de layout/visualiza??o (*.model.ts)
-  shared/           # header, sidebar, main-layout (shell da aplicação), theme.service (dark/light)
-  styles/           # buttons/cards/inputs/modal css utilitários + themes/colors.css + utilities/animations.css
-```
-
-- Rotas registradas em [app.routes.ts](src/app/app.routes.ts): `home`, `login`, `habits`, `goals`, `notes`, `calendar`, `files`, `projects`, `schedule` — sem guards nem lazy loading até o momento.
-- Cada página é standalone; imports centralizados de páginas via [pages/index.ts](src/app/pages/index.ts).
-- Padrão de nomes de arquivo: PascalCase para models/services isolados dentro de uma feature (ex.: `NoteModel.ts`, `NoteService.ts`), kebab/lowercase para os demais arquivos Angular padrão (`*.ts`, `*.html`, `*.css` do componente).
-
-## Convenções (eslint.config.js)
-
-- Seletor de componente: `app-` + kebab-case
-- Seletor de diretiva: `app` + camelCase
-- Templates passam por `angular-eslint` (`templateRecommended` + `templateAccessibility`) — cuidado com acessibilidade nos `.html`
-
-## Domínio (schedule/models)
-
-- `PlannerEvent` / `PlannerEventDraft`: evento no planner (categoria: work/study/personal/event/habit, kind: event/task)
-- `PlannerTask`, `PlannerHabit`: itens auxiliares do dia (tarefas/hábitos ligados ao planner)
-- `Task` (em `models/task.model.ts`): tarefa "genérica" com `TaskPriority` (Alta/Média/Normal) e `TaskPeriod` (hoje/proximas/mais-tarde) — usada fora do contexto estrito do planner
-- `PositionedPlannerEvent` / `PlannerOverlapGroup`: suporte de layout para renderizar eventos sobrepostos lado a lado (ver `planner.utils.ts`)
-
-Textos de domínio (labels, prioridades) estão em **português** — manter esse idioma ao adicionar novos campos/enum de domínio.
-
-## Coisas a notar para quem for investigar/mexer no projeto
-
-- **Não há autenticação real**: existe uma página `login` mas sem guard de rotas nem serviço de auth ligado — não assumir que rotas são protegidas.
-- **Dados majoritariamente mockados**: só `notes` fala com um backend HTTP; outras páginas (habits, goals, schedule, projects, calendar, files) provavelmente têm dados fixos no próprio componente — confirmar por página antes de assumir uma API existente.
-- **Sem NgModules**: tudo standalone; ao criar componente novo, seguir o padrão de `imports: [...]` direto no `@Component`.
-- **CSS por componente + Tailwind + design tokens em `styles/`**: antes de estilizar algo novo, checar `styles/themes/colors.css` e `styles/components/*.css` para reaproveitar classes utilitárias existentes em vez de duplicar.
-- **Tema dark/light**: gerenciado por `shared/theme.service.ts`.
-- **Feature `schedule`**: componentes organizados por responsabilidade; consultar [o mapa da agenda](src/app/pages/schedule/README.md). Ao investigar bugs de UI de calendário/planner, começar por `schedule.ts`, `components/planner/planning.ts` e `utils/planner.utils.ts`.
+Não há suíte e2e configurada. Para documentação, revise links e o diff sem iniciar
+serviços.
