@@ -1,0 +1,44 @@
+<fieldset class="recurrence" [disabled]="disabled()">
+  <legend><mat-icon aria-hidden="true">event_repeat</mat-icon> Repetição</legend>
+  <div class="recurrence__fields">
+    <label>
+      Frequência
+      <select [value]="value().frequency" (change)="changeFrequency($event)">
+        @for (option of options; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+    @if (value().frequency) {
+      <label>
+        Repetir até
+        <input
+          type="date"
+          [value]="value().until"
+          [min]="startDate()"
+          required
+          (input)="changeUntil($event)"
+        />
+      </label>
+    }
+  </div>
+  @if (value().frequency) {
+    <button
+      type="button"
+      class="recurrence__shortcut"
+      [disabled]="!startDate()"
+      (click)="useYearEnd()"
+    >
+      Até o fim do ano
+    </button>
+    <p>
+      Cada ocorrência tem sua própria conclusão. As próximas continuam na agenda e as concluídas
+      ficam no histórico.
+    </p>
+    @if (value().frequency === 'MONTHLY' || value().frequency === 'YEARLY') {
+      <p>Repete na mesma data. Meses ou anos em que ela não existe são pulados.</p>
+    }
+  } @else {
+    <p>Uma vez só, no dia que você escolher.</p>
+  }
+</fieldset>

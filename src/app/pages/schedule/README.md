@@ -1,46 +1,74 @@
 # Agenda
 
-`schedule.ts` compõe o cabeçalho e alterna entre as abas de planejamento e tarefas.
+`schedule.ts` compõe o cabeçalho e o planner, compartilhando a data selecionada e o
+modo diário/semanal. A agenda trabalha apenas com **eventos**; a antiga
+funcionalidade de tarefas foi removida.
 
 ```text
 schedule/
+├── schedule.*                    # Página: cabeçalho + planner
 ├── components/
-│   ├── schedule-header/                 # Data, diário/semanal e ação principal
-│   ├── planner/
-│   │   ├── planning.*                   # Composição e coordenação do planner
-│   │   ├── views/                       # Visualizações diária, semanal e circular
-│   │   ├── events/                      # Cartão, formulário e agrupamento de sobreposições
-│   │   ├── sidebar/                     # Painel lateral e seus cartões
-│   │   ├── planner-task-tray/           # Bandeja, seleção de horário e estado de salvamento
-│   │   └── planner-unscheduled-tasks/   # Lista de chips arrastáveis usada pela bandeja
-│   └── tasks/
-│       ├── tasks.*                      # Lista e detalhes de tarefas
-│       └── task-form/                   # Formulário de criação de tarefa
-├── models/                              # Tipos e contratos (*.model.ts)
-├── constants/                           # Slots e definições dos períodos
-├── utils/                               # Funções puras de datas, horários e indicadores
-├── tests/utils/                         # Testes das funções puras
-└── services/                            # Tarefas e endpoints; planner em planner-services/
+│   ├── schedule-header/          # Data, diário/semanal e "Novo evento"
+│   ├── planning/                 # Coordena o planner: seleção, mensagens e formulário
+│   ├── views/                    # Visualizações diária, semanal e circular
+│   ├── events/                   # Cartão, formulário, lista simples e sobreposições
+│   ├── event-tray/               # Bandeja de eventos sem data e seus chips arrastáveis
+│   └── sidebar/                  # Painel lateral e seus cartões
+├── models/                       # Tipos e contratos (*.model.ts)
+├── constants/                    # Slots, períodos, rótulos e medidas da linha do tempo
+├── pipes/                        # Formatação para templates (horário do evento)
+├── services/                     # Acesso à API e coordenação das gravações
+└── utils/                        # Funções puras, com testes ao lado (*.spec.ts)
 ```
 
-- Mantenha `.ts`, `.html`, `.css` e testes do componente juntos.
-- Coloque componentes específicos do planner no grupo correspondente; o cabeçalho pertence à agenda porque atende às duas abas.
-- Use `sidebar/daily-summary` para o resumo do dia. O antigo `planner-summary-card`, duplicado e sem consumidores, foi removido.
-- Centralize os serviços da agenda em `services/`; componentes não devem conter pastas de acesso a dados. `tasks.service.ts` também é consumido pelo calendário.
-- `planning.ts` compõe a tela e mantém o estado visual de seleção, mensagens e formulários.
-- `utils/planner-summary.utils.ts` contém cálculos puros dos indicadores e interseções de intervalos.
-- `services/planner-services/planner-scheduling.service.ts` coordena validação, gravação e resultados explícitos. `planner.service.ts` acessa a API e atualiza os sinais somente após a confirmação das escritas.
+## Responsabilidades
 
-## Fluxo de agendamento
+- `services/planner.service.ts` acessa `planner/events` e `planner/summary` e atualiza
+  os sinais somente após a confirmação de cada escrita.
+- `services/planner-scheduling.service.ts` serializa as gravações (`busy`) e traduz
+  respostas da API em resultados explícitos (`occupied`, `invalid`, `missing-event`,
+  `unauthorized`, `forbidden`, `failed`). Falhas nunca viram sucesso local.
+- `services/habit-execution.service.ts` carrega e alterna os hábitos do dia.
+- `components/planning/` mantém apenas estado visual; regras de produto (conflitos,
+  disponibilidade, resumo do dia, recorrência) vêm do backend.
 
-`PlannerTaskTray` emite a intenção de agendar; `Planning` a encaminha para `PlannerSchedulingService`. O serviço cria o compromisso e só depois solicita a retirada da tarefa da bandeja. Falhas de gravação não são mais convertidas em sucesso local. O formulário mantém o rascunho, e as ações de gravação ficam bloqueadas durante a operação.
+## Eventos sem data, sem horário e pontuais
 
-Se a criação funcionar e a retirada falhar, a interface oferece **Concluir agendamento**. Durante a sessão, a nova tentativa repete apenas a retirada, preservando o compromisso já criado. São duas requisições nos endpoints existentes: uma transação atômica e recuperação após recarregar a página dependem de suporte no backend, que não faz parte deste repositório.
+Um evento pode não ter `date` (sem data), não ter `startTime` (sem horário) ou não
+ter `endTime` (pontual).
 
-## Modelos, imports e testes
+- **Sem data:** aparece na bandeja (visão diária) ou na lista "Eventos sem data"
+  (visão semanal). Agendar pela bandeja envia um `PUT planner/events/{id}` com a data,
+  o início escolhido e um bloco de uma hora (`slotEndTime`). O término é necessário
+  porque o backend só verifica conflitos de eventos que têm término.
+- **Sem horário:** aparece na lista "Sem horário neste dia" do dia selecionado.
+- **Pontual:** ocupa apenas o minuto inicial na linha do tempo (`eventEndMinutes`), para
+  colidir com eventos que começam no mesmo minuto sem inventar duração.
 
-`models/` contém somente tipos, interfaces e enums, separados por domínio: planner, tarefas, rotinas, visualização, layout e resultado de agendamento. Seu `index.ts` expõe esses contratos. Funções executáveis ficam em `utils/`, e valores fixos em `constants/`.
+A bandeja usa a disponibilidade calculada pelo backend: horários ocupados ficam
+desabilitados e o primeiro horário livre é sugerido. A validação final continua
+sendo da API (`409` para conflito).
 
-Use `@pages/schedule/models`, `@pages/schedule/utils` e `@pages/schedule/constants` nos consumidores. Para serviços distantes, use o alias com o caminho do arquivo; para arquivos vizinhos, prefira imports relativos curtos. Marque imports exclusivos de tipos com `import type`.
+## Utilitários
 
-Testes junto ao código são uma prática válida. Nesta organização, os testes de utilitários ficam em `tests/utils/`, fora de `models/`; testes de componentes e serviços continuam junto às implementações. A pasta `models/` não concentra lógica que precisaria desses testes.
+| Arquivo                 | Conteúdo                                                      |
+| ----------------------- | ------------------------------------------------------------- |
+| `date.utils.ts`         | Datas civis locais: `dateKey`, `parseLocalDate`, semanas      |
+| `time.utils.ts`         | Minutos, validação de intervalo, término efetivo e formatação |
+| `event-layout.utils.ts` | Interseções, colunas e grupos de eventos sobrepostos          |
+| `day-layout.utils.ts`   | Segmentos e geometria da visão diária                         |
+| `radial.utils.ts`       | Projeção das 24 horas no círculo                              |
+
+## Convenções
+
+- Mantenha `.ts`, `.html`, `.css` e `.spec.ts` de cada componente, serviço ou
+  utilitário juntos.
+- Use `@pages/schedule/models`, `@pages/schedule/utils` e `@pages/schedule/constants`
+  nos consumidores. Entre componentes vizinhos, prefira imports relativos curtos.
+  Marque imports exclusivos de tipos com `import type`.
+- `models/` contém somente tipos; funções ficam em `utils/` e valores fixos em
+  `constants/`.
+- Exiba horários com o pipe `eventTime`, que trata intervalos, eventos pontuais e
+  eventos sem horário.
+- `utils/` também é consumido por `calendar` e `home` (`startOfDay`, `addDays`,
+  `startOfWeek`, `dateKey`, `parseLocalDate`, `isPlannerInterval`); preserve essas assinaturas.

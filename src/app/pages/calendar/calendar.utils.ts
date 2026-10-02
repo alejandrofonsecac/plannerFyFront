@@ -60,11 +60,12 @@ export function buildMonthDays(referenceDate: Date): CalendarDay[] {
   });
 }
 
-export function compareTime(first: string, second: string): number {
-  return first.localeCompare(second);
+export function compareTime(first: string | null, second: string | null): number {
+  return (first ?? '').localeCompare(second ?? '');
 }
 
-export function timeToMinutes(time: string): number {
+export function timeToMinutes(time: string | null): number {
+  if (!time) return 0;
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
 }

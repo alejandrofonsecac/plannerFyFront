@@ -1,31 +1,35 @@
+import type { RecurrenceFields } from '@app/shared/recurrence/recurrence.model';
+
 export type PlannerCategory = 'work' | 'study' | 'personal' | 'health' | 'event' | 'habit';
 
 export type PlannerEventSource = 'internal' | 'google';
 
-export type PlannerItemKind = 'event' | 'task';
+export type PlannerEventPriority = 'Alta' | 'Média' | 'Normal';
 
-export interface PlannerEvent {
-  id: number;
-  date: string;
+/**
+ * Fields shared by the API response and the write payload. `date` is null for undated
+ * events; `startTime` is null for untimed ones; `endTime` is null for point events.
+ */
+interface PlannerEventFields extends RecurrenceFields {
   title: string;
+  date: string | null;
   description?: string;
   location?: string;
   source?: PlannerEventSource;
-  startTime: string;
-  endTime: string;
+  completed?: boolean;
+  priority?: PlannerEventPriority | null;
+  startTime: string | null;
+  endTime: string | null;
   category: PlannerCategory;
-  kind: PlannerItemKind;
 }
 
-export interface PlannerEventDraft {
-  title: string;
-  date: string;
+export interface PlannerEvent extends PlannerEventFields {
+  id: number;
+  kind: 'event';
+}
+
+export interface PlannerEventDraft extends PlannerEventFields {
   description: string;
-  location?: string;
-  source?: PlannerEventSource;
-  startTime: string;
-  endTime: string;
-  category: PlannerCategory;
 }
 
 /** A fixed one-hour interval in the 24-hour planner day. */
@@ -34,7 +38,7 @@ export interface PlannerTimeSlot {
   endTime: string;
 }
 
-/** Daily availability derived from the planner's one-hour slots. */
+/** Daily availability of the planner's one-hour slots, calculated by the API. */
 export interface PlannerDayAvailability {
   date: string;
   totalBlocks: number;
@@ -42,13 +46,6 @@ export interface PlannerDayAvailability {
   availableBlocks: number;
   availableHours: number;
   slots: (PlannerTimeSlot & { available: boolean })[];
-}
-
-export interface PlannerTask {
-  id: number;
-  title: string;
-  category: PlannerCategory;
-  project?: string;
 }
 
 export interface PlannerHabit {
@@ -65,15 +62,15 @@ export interface PositionedPlannerEvent extends PlannerEvent {
 export interface PlannerOverlapGroup {
   id: string;
   events: PlannerEvent[];
-  startTime: string;
-  endTime: string;
+  startTime: string | null;
+  endTime: string | null;
 }
 
 export interface PlannerDaySummary {
   date: string;
   events: PlannerEvent[];
   availability: PlannerDayAvailability;
-  taskCount: number;
+  undatedCount: number;
   eventCount: number;
   plannedMinutes: number;
   freeMinutes: number;

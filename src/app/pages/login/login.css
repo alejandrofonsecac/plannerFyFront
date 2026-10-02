@@ -167,7 +167,7 @@ h1 span {
   border-radius: 12px;
   animation: float 7s ease-in-out infinite;
 }
-.task-card {
+.event-preview-card {
   left: 0;
   top: 33px;
   width: 185px;
@@ -182,14 +182,14 @@ h1 span {
   letter-spacing: 1px;
   font-weight: 600;
 }
-.mini-task {
+.mini-event {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 10px;
   margin-top: 13px;
 }
-.mini-task s {
+.mini-event s {
   color: var(--color-text-disabled);
 }
 .check,
@@ -207,13 +207,13 @@ h1 span {
 .empty-check {
   border: 1px solid var(--color-border);
 }
-.task-progress {
+.event-progress {
   height: 3px;
   background: var(--color-surface-elevated);
   margin-top: 17px;
   border-radius: 3px;
 }
-.task-progress i {
+.event-progress i {
   display: block;
   width: 62%;
   height: 100%;

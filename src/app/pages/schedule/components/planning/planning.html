@@ -1,0 +1,128 @@
+@if (plannerError(); as message) {
+  <div class="card p-4 text-error" role="alert">
+    {{ message }}
+    <button type="button" class="button button--secondary" (click)="reload()">
+      Tentar novamente
+    </button>
+  </div>
+}
+@if (habitError(); as message) {
+  <div class="card p-4 text-error" role="alert">
+    {{ message }}
+    <button type="button" class="button button--secondary" (click)="reloadHabits()">
+      Tentar novamente
+    </button>
+  </div>
+}
+@if (summary(); as data) {
+  <section
+    class="planner-layout"
+    [class.planner-layout--weekly]="viewMode() === 'weekly'"
+    [class.planner-layout--radial]="viewMode() === 'daily' && preferences.display() === 'radial'"
+    aria-label="Planejador"
+  >
+    <div class="planner-layout__timeline">
+      @if (viewMode() === 'weekly') {
+        <app-planner-event-list
+          heading="Eventos sem data"
+          emptyMessage="Nenhum evento sem data."
+          [events]="undatedEvents()"
+          [disabled]="scheduling.busy()"
+          (eventSelected)="openEventEditor($event)"
+        />
+      }
+      @if (untimedEvents().length) {
+        <app-planner-event-list
+          heading="Sem horário neste dia"
+          [events]="untimedEvents()"
+          [disabled]="scheduling.busy()"
+          (eventSelected)="openEventEditor($event)"
+        />
+      }
+
+      @if (viewMode() === 'weekly') {
+        <app-planner-week-view
+          [date]="selectedDate()"
+          [events]="events()"
+          (eventRemoved)="removeEvent($event)"
+          (eventEdited)="openEventEditor($event)"
+        />
+      } @else if (preferences.display() === 'radial') {
+        <app-planner-radial-view
+          [date]="selectedDate()"
+          [events]="data.events"
+          [selectingSlot]="!!selectedUndatedEvent()"
+          (undatedEventDropped)="onUndatedEventDropped($event.event, $event.slotTime)"
+          (slotSelected)="scheduleSelectedEvent($event)"
+          (dayChanged)="changeDay($event)"
+          (eventEdited)="openEventEditor($event)"
+        />
+      } @else {
+        <app-planner-day-view
+          [date]="selectedDate()"
+          [events]="data.events"
+          [dragEnabled]="dragAndDropEnabled()"
+          [selectingSlot]="!!selectedUndatedEvent()"
+          (undatedEventDropped)="onUndatedEventDropped($event.event, $event.slotTime)"
+          (slotSelected)="scheduleSelectedEvent($event)"
+          (eventRemoved)="removeEvent($event)"
+          (eventEdited)="openEventEditor($event)"
+        />
+      }
+    </div>
+
+    <aside class="planner-layout__aside" aria-label="Painel lateral do planejador">
+      @if (viewMode() === 'daily') {
+        <app-planner-event-tray
+          [events]="undatedEvents()"
+          [availability]="data.availability"
+          [selectedEvent]="selectedUndatedEvent()"
+          [connectedDropListIds]="dailyDropListIds()"
+          [busy]="scheduling.busy()"
+          [message]="scheduleMessage()"
+          (selectedEventChange)="selectedUndatedEvent.set($event)"
+          (eventEdited)="openEventEditor($event)"
+          (scheduleRequested)="scheduleUndatedEvent($event.event, $event.time)"
+          (dragMoved)="radialView()?.dragMoved($event)"
+          (dragEnded)="endUndatedEventDrag()"
+        />
+      }
+      <app-planner-sidebar
+        [date]="selectedDate()"
+        [events]="data.events"
+        [nextActivity]="data.nextActivity"
+        [undatedCount]="data.undatedCount"
+        [eventCount]="data.eventCount"
+        [habits]="habits()"
+        [plannedHours]="data.plannedHours"
+        [freeTime]="data.freeTime"
+        [freeTimePercentage]="data.freeTimePercentage"
+        (habitToggled)="toggleHabit($event)"
+      />
+    </aside>
+
+    <app-planner-event-form
+      [open]="eventFormOpen()"
+      [saving]="scheduling.busy()"
+      [date]="selectedDate()"
+      [event]="editingEvent()"
+      [requestError]="operationError()"
+      (cancelled)="closeEventForm()"
+      (created)="createEvent($event)"
+      (updated)="updateEvent($event)"
+      (removed)="removeEvent($event)"
+    />
+
+    <!-- While the form is open it shows the error itself. -->
+    @if (!eventFormOpen() && operationError(); as message) {
+      <div class="planner-operation-error card" role="alert">
+        <p>{{ message }}</p>
+        <button type="button" class="button button--ghost" (click)="operationError.set('')">
+          Fechar aviso
+        </button>
+      </div>
+    }
+  </section>
+} @else {
+  <div class="card p-4" role="status">Carregando planejamento...</div>
+}

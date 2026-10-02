@@ -76,15 +76,44 @@
         </div>
       </fieldset>
 
-      <label class="form-field">
-        Frequência
-        <select class="input-control" name="frequency" [(ngModel)]="draft.frequencyType">
-          <option value="daily">Todos os dias</option>
-        </select>
-        <small class="side-drawer__hint"
-          >Outras frequências serão disponibilizadas em breve.</small
+      <fieldset class="habit-drawer__frequency" [disabled]="saving()">
+        <legend><mat-icon aria-hidden="true">event_repeat</mat-icon> Frequência</legend>
+        <label class="form-field" for="habit-frequency">Quando você quer praticar?</label>
+        <select
+          id="habit-frequency"
+          class="input-control"
+          name="frequency"
+          [(ngModel)]="draft.frequencyType"
         >
-      </label>
+          <option value="daily">Todo dia</option>
+          <option value="custom">Definir</option>
+        </select>
+        @if (draft.frequencyType === 'custom') {
+          <fieldset class="habit-drawer__weekdays">
+            <legend>Escolha os dias da semana</legend>
+            <div class="habit-drawer__day-picker">
+              @for (day of weekdays; track day.value) {
+                <button
+                  type="button"
+                  class="habit-drawer__day"
+                  [class.habit-drawer__day--selected]="draft.daysOfWeek?.includes(day.value)"
+                  [attr.aria-pressed]="!!draft.daysOfWeek?.includes(day.value)"
+                  [attr.aria-label]="day.label"
+                  (click)="toggleWeekday(day.value)"
+                >
+                  {{ day.short }}
+                </button>
+              }
+            </div>
+            <p class="side-drawer__hint">
+              Só os dias escolhidos entram no acompanhamento do hábito.
+            </p>
+            @if (submitted && !draft.daysOfWeek?.length) {
+              <p class="side-drawer__error" role="alert">Escolha pelo menos um dia da semana.</p>
+            }
+          </fieldset>
+        }
+      </fieldset>
 
       <label class="form-field">
         Horário <span class="side-drawer__optional">Opcional</span>
@@ -112,12 +141,15 @@
         ></textarea>
       </label>
 
+      @if (error()) {
+        <p class="side-drawer__error" role="alert">{{ error() }}</p>
+      }
       <footer class="side-drawer__actions">
         <button type="button" class="button button--secondary" (click)="dismissed.emit()">
           Cancelar
         </button>
-        <button type="submit" class="button button--primary">
-          <mat-icon>save</mat-icon>Salvar
+        <button type="submit" class="button button--primary" [disabled]="saving()">
+          <mat-icon>save</mat-icon>{{ saving() ? 'Salvando…' : 'Salvar' }}
         </button>
       </footer>
     </form>

@@ -1,3 +1,4 @@
+import { recurrenceRequestError } from '@app/shared/recurrence/recurrence-error';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom, Observable, Subscription } from 'rxjs';
 import { ApiClient, withoutId } from '../../../core/data-access/api-client.service';
@@ -54,10 +55,8 @@ export class CalendarEventService {
       await firstValueFrom(request);
       this.load();
       return true;
-    } catch {
-      this.error.set(
-        'Não foi possível salvar. Verifique os dados e possíveis conflitos de horário.',
-      );
+    } catch (error) {
+      this.error.set(recurrenceRequestError(error));
       return false;
     } finally {
       this.saving.set(false);

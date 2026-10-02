@@ -1,0 +1,55 @@
+<section class="planner-undated-events card" aria-labelledby="undated-events-title">
+  <header class="planner-undated-events__header">
+    <div>
+      <h2 id="undated-events-title">Agendar eventos sem data</h2>
+      <p>Segure e arraste para agendar, ou toque e escolha um horário.</p>
+    </div>
+    <span class="planner-undated-events__count">{{ events().length }}</span>
+  </header>
+
+  @if (events().length > 0) {
+    <div
+      cdkDropList
+      id="undated-events"
+      class="planner-undated-events__list"
+      [cdkDropListData]="events()"
+      [cdkDropListConnectedTo]="connectedDropListIds()"
+      [cdkDropListDisabled]="!dragEnabled()"
+      [cdkDropListSortingDisabled]="true"
+    >
+      @for (event of events(); track event.id) {
+        <button
+          type="button"
+          cdkDrag
+          class="planner-undated-event"
+          [class.planner-undated-event--drag-disabled]="!dragEnabled()"
+          [cdkDragData]="event"
+          [cdkDragDisabled]="!dragEnabled()"
+          [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+          [attr.aria-pressed]="selectedEventId() === event.id"
+          (cdkDragStarted)="beginDrag()"
+          (cdkDragMoved)="dragMoved.emit($event)"
+          (cdkDragEnded)="dragEnded.emit()"
+          (pointerdown)="prepareClick()"
+          (click)="select(event)"
+        >
+          <mat-icon class="planner-undated-event__drag" aria-hidden="true">drag_indicator</mat-icon>
+          <span class="planner-undated-event__content">
+            <strong>{{ event.completed ? '✓ ' : '' }}{{ event.title }}</strong>
+            @if (event.priority) {
+              <span>{{ event.priority }}</span>
+            }
+          </span>
+          <span
+            class="planner-undated-event__category"
+            [class]="'planner-undated-event__category--' + event.category"
+          >
+            {{ categoryLabels[event.category] }}
+          </span>
+        </button>
+      }
+    </div>
+  } @else {
+    <p class="planner-undated-events__empty">Nenhum evento sem data para agendar.</p>
+  }
+</section>

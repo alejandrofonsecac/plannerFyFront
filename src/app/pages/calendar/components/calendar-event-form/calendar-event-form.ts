@@ -1,7 +1,20 @@
-import { ChangeDetectionStrategy, Component, effect, input, output } from '@angular/core';
+import { isPlannerInterval } from '@pages/schedule/utils';
+import { RecurrenceField } from '@app/shared/recurrence/recurrence-field';
+import {
+  recurrencePayload,
+  recurrenceFormError,
+  recurrenceLabel,
+  type RecurrenceDraft,
+} from '@app/shared/recurrence/recurrence.model';
+import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { CalendarEvent, CalendarEventCategory, CalendarEventDraft, CalendarEventSource } from '../../models';
+import type {
+  CalendarEvent,
+  CalendarEventCategory,
+  CalendarEventDraft,
+  CalendarEventSource,
+} from '../../models';
 
 interface EventFormDraft {
   title: string;
@@ -12,6 +25,8 @@ interface EventFormDraft {
   location: string;
   source: CalendarEventSource;
   category: CalendarEventCategory;
+  completed: boolean;
+  priority: 'Alta' | 'Média' | 'Normal' | '';
 }
 
 const CATEGORY_OPTIONS: { value: CalendarEventCategory; label: string }[] = [
@@ -25,12 +40,17 @@ const CATEGORY_OPTIONS: { value: CalendarEventCategory; label: string }[] = [
 
 @Component({
   selector: 'app-calendar-event-form',
-  imports: [FormsModule, MatIconModule],
+  imports: [FormsModule, MatIconModule, RecurrenceField],
   templateUrl: './calendar-event-form.html',
   styleUrl: './calendar-event-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarEventForm {
+  readonly saving = input(false);
+  readonly error = input<string | null>(null);
+  readonly recurrence = signal<RecurrenceDraft>({ frequency: '', until: '' });
+  readonly validationError = signal('');
+  readonly recurrenceLabel = recurrenceLabel;
   readonly event = input<CalendarEvent | null>(null);
   readonly initialDate = input.required<string>();
   readonly formSubmitted = output<CalendarEventDraft>();
@@ -46,36 +66,44 @@ export class CalendarEventForm {
       this.draft = event
         ? {
             title: event.title,
-            date: event.date,
-            startTime: event.startTime,
-            endTime: event.endTime,
+            date: event.date ?? '',
+            startTime: event.startTime ?? '',
+            endTime: event.endTime ?? '',
             description: event.description,
             location: event.location ?? '',
             source: event.source,
             category: event.category,
+            completed: event.completed ?? false,
+            priority: event.priority ?? '',
           }
         : this.emptyDraft(this.initialDate());
       this.submitted = false;
+      this.recurrence.set({ frequency: '', until: '' });
+      this.validationError.set('');
     });
   }
 
   submit(): void {
+    if (this.saving()) return;
     this.submitted = true;
-    if (
-      !this.draft.title.trim() ||
-      !this.draft.date ||
-      !this.draft.startTime ||
-      !this.draft.endTime
-    ) {
+    if (!this.draft.title.trim()) return;
+    if ((this.draft.startTime && !this.draft.date) || !isPlannerInterval({ startTime: this.draft.startTime || null, endTime: this.draft.endTime || null })) {
+      this.validationError.set('Informe uma data para o início e um término posterior, se houver.');
       return;
     }
-    if (this.draft.startTime >= this.draft.endTime) return;
 
+    this.validationError.set(
+      this.event() ? '' : recurrenceFormError(this.recurrence(), this.draft.date),
+    );
+    if (this.validationError()) return;
     this.formSubmitted.emit({
+      ...(!this.event() ? recurrencePayload(this.recurrence()) : {}),
+      completed: this.draft.completed,
+      priority: this.draft.priority || null,
       title: this.draft.title.trim(),
-      date: this.draft.date,
-      startTime: this.draft.startTime,
-      endTime: this.draft.endTime,
+      date: this.draft.date || null,
+      startTime: this.draft.startTime || null,
+      endTime: this.draft.endTime || null,
       description: this.draft.description.trim(),
       location: this.draft.location.trim() || undefined,
       source: this.draft.source,
@@ -97,6 +125,8 @@ export class CalendarEventForm {
       location: '',
       source: 'internal',
       category: 'work',
+      completed: false,
+      priority: '',
     };
   }
 }

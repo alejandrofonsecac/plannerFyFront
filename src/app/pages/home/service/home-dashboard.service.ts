@@ -23,7 +23,7 @@ interface BackendDashboard {
     target: number;
     progress: number;
   }[];
-  summary: { completedTasks: number; totalTasks: number; highestCurrentStreak: number };
+  summary: { completedEvents: number; totalEvents: number; highestCurrentStreak: number };
 }
 
 export interface HomeDashboardData {
@@ -135,14 +135,14 @@ function dashboard(
       description: data?.focus?.description ?? null,
       progressLabel: 'Progresso',
       progress: data?.focus?.progress ?? null,
-      actionLabel: 'Abrir tarefas',
+      actionLabel: 'Abrir eventos',
     },
     agenda: {
       title: 'Agenda de hoje',
       countLabel: data ? `${data.planner.events.length} eventos` : null,
       events: (data?.planner.events ?? []).map((event) => ({
         id: String(event.id),
-        time: event.startTime,
+        time: event.startTime ?? 'Sem horário',
         title: event.title,
         category: event.category,
         tone: tone(event.category),
@@ -167,8 +167,8 @@ function dashboard(
         {
           id: 1,
           icon: 'task_alt',
-          value: data ? `${data.summary.completedTasks}/${data.summary.totalTasks}` : null,
-          label: 'tarefas concluídas',
+          value: data ? `${data.summary.completedEvents}/${data.summary.totalEvents}` : null,
+          label: 'eventos concluídos',
         },
         { id: 2, icon: 'psychology', value: null, label: 'foco profundo' },
         {

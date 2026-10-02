@@ -75,13 +75,16 @@ export class Habits {
   }
 
   closeDrawer(): void {
+    if (this.habitService.saving()) return;
     this.drawerOpen.set(false);
     this.editingHabit.set(null);
   }
 
   async saveHabit(draft: HabitDraft): Promise<void> {
     const habit = this.editingHabit();
-    const saved = await (habit ? this.habitService.update(habit.id, draft) : this.habitService.create(draft));
+    const saved = await (habit
+      ? this.habitService.update(habit.id, draft)
+      : this.habitService.create(draft));
     if (saved) this.closeDrawer();
   }
 

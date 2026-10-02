@@ -1,0 +1,58 @@
+:host {
+  display: block;
+}
+
+.planner-event-list {
+  padding: 16px;
+}
+
+.planner-event-list h2 {
+  color: var(--color-text-main);
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.planner-event-list ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.planner-event-list__item {
+  align-items: center;
+  background: var(--color-card-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-main);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  gap: 6px;
+  padding: 6px 12px;
+}
+
+.planner-event-list__item:hover:not(:disabled),
+.planner-event-list__item:focus-visible {
+  border-color: var(--color-brand-primary);
+}
+
+.planner-event-list__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.planner-event-list__item--done span:first-child {
+  color: var(--color-text-disabled);
+  text-decoration: line-through;
+}
+
+.planner-event-list__meta,
+.planner-event-list__empty {
+  color: var(--color-text-sub);
+  font-size: 12px;
+}

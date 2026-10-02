@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { Habit } from '../../models/habit';
-import { buildHeatmap } from '../../utils/habit-metrics';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { type Habit, HABIT_WEEKDAYS } from '../../models/habit';
+import { formatHabitHistory } from '../../utils/habit-history';
 
 @Component({
   selector: 'app-habit-card',
-  imports: [MatIconModule],
+  imports: [MatIconModule, MatTooltipModule],
   templateUrl: './habit-card.html',
   styleUrl: './habit-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,8 +19,7 @@ export class HabitCard {
   readonly expanded = signal(false);
 
   readonly metrics = computed(() => this.habit().metrics);
-  readonly miniHeatmap = computed(() => buildHeatmap(this.habit(), 21));
-  readonly fullHeatmap = computed(() => buildHeatmap(this.habit(), 60));
+  readonly heatmap = computed(() => formatHabitHistory(this.habit()));
 
   toggleExpanded(): void {
     this.expanded.update((expanded) => !expanded);
@@ -37,9 +37,11 @@ export class HabitCard {
       case 'weekdays':
         return 'Dias úteis';
       case 'custom':
-        return 'Frequência personalizada';
+        return HABIT_WEEKDAYS.filter((day) => this.habit().daysOfWeek.includes(day.value))
+          .map((day) => day.short)
+          .join(' · ');
       default:
-        return 'Todos os dias';
+        return 'Todo dia';
     }
   }
 }

@@ -1,0 +1,23 @@
+<section class="card planner-event-list" [attr.aria-labelledby]="headingId">
+  <h2 [id]="headingId">{{ heading() }}</h2>
+  <ul>
+    @for (event of events(); track event.id) {
+      <li>
+        <button
+          type="button"
+          class="planner-event-list__item"
+          [class.planner-event-list__item--done]="event.completed"
+          [disabled]="disabled()"
+          (click)="eventSelected.emit(event)"
+        >
+          <span>{{ event.title }}</span>
+          @if (event.priority) {
+            <span class="planner-event-list__meta">{{ event.priority }}</span>
+          }
+        </button>
+      </li>
+    } @empty {
+      <li class="planner-event-list__empty">{{ emptyMessage() }}</li>
+    }
+  </ul>
+</section>
