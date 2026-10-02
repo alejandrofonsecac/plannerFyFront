@@ -1,4 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Observable, Subscription } from 'rxjs';
 import { ApiClient } from '../../../core/data-access/api-client.service';
 import type { Habit, HabitBoard, HabitDraft, HabitSummary } from '../models/habit';
@@ -61,14 +62,22 @@ export class HabitService {
     if (this.saving()) return false;
     this.saving.set(true);
     this.error.set(null);
-    
+
     try {
       await firstValueFrom(request);
       this.load();
       return true;
-    } catch {
+    } catch (error) {
+      const messages: Record<number, string> = {
+        400: 'Revise os dados e escolha pelo menos um dia para a frequência definida.',
+        401: 'Sua sessão expirou. Entre novamente para continuar.',
+        403: 'Você não tem permissão para alterar este hábito.',
+        404: 'Este hábito não está mais disponível. Atualize a página.',
+        409: 'Não foi possível alterar este hábito agora. Atualize a página e tente novamente.',
+      };
       this.error.set(
-        'Não foi possível salvar o hábito. Seus dados foram mantidos; tente novamente.',
+        (error instanceof HttpErrorResponse && messages[error.status]) ||
+          'Não foi possível salvar o hábito. Seus dados foram mantidos; tente novamente.',
       );
       return false;
     } finally {

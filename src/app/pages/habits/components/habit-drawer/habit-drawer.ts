@@ -2,7 +2,13 @@ import { ChangeDetectionStrategy, Component, effect, inject, input, output } fro
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { CategoryService } from '../../../../shared/components/categories';
-import { Habit, HabitDraft, emptyHabitDraft, habitToDraft } from '../../models/habit';
+import {
+  type Habit,
+  type HabitDraft,
+  HABIT_WEEKDAYS,
+  emptyHabitDraft,
+  habitToDraft,
+} from '../../models/habit';
 
 const HABIT_ICONS = [
   'self_improvement',
@@ -28,10 +34,13 @@ export class HabitDrawer {
   private readonly categoryService = inject(CategoryService);
 
   readonly habit = input<Habit | null>(null);
+  readonly saving = input(false);
+  readonly error = input<string | null>(null);
   readonly dismissed = output<void>();
   readonly formSubmitted = output<HabitDraft>();
   readonly categories = this.categoryService.categories;
   readonly icons = HABIT_ICONS;
+  readonly weekdays = HABIT_WEEKDAYS;
   draft: HabitDraft = emptyHabitDraft();
   submitted = false;
 
@@ -44,10 +53,26 @@ export class HabitDrawer {
   }
 
   submit(): void {
+    if (this.saving()) return;
     this.submitted = true;
     if (!this.draft.name.trim()) return;
+    if (this.draft.frequencyType === 'custom' && !this.draft.daysOfWeek?.length) return;
 
-    this.formSubmitted.emit({ ...this.draft });
+    this.formSubmitted.emit({
+      ...this.draft,
+      daysOfWeek: this.draft.frequencyType === 'custom' ? [...(this.draft.daysOfWeek ?? [])] : [],
+    });
+  }
+
+  toggleWeekday(day: number): void {
+    if (this.saving()) return;
+    const selected = this.draft.daysOfWeek ?? [];
+    this.draft = {
+      ...this.draft,
+      daysOfWeek: selected.includes(day)
+        ? selected.filter((value) => value !== day)
+        : [...selected, day].sort((first, second) => first - second),
+    };
   }
 
   setIcon(icon: string): void {

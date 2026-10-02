@@ -3,7 +3,9 @@
     <header class="page-header">
       <div>
         <h1 class="page-title">Hábitos</h1>
-        <p class="page-subtitle">Construa sua rotina e acompanhe a consistência que você acumulou.</p>
+        <p class="page-subtitle">
+          Construa sua rotina e acompanhe a consistência que você acumulou.
+        </p>
       </div>
       <button
         type="button"
@@ -50,7 +52,17 @@
       <app-habit-summary-bar [summary]="summary" />
     }
 
-    @if (filteredHabits().length) {
+    @if (habitService.error() && !drawerOpen()) {
+      <p role="alert">
+        {{ habitService.error() }}
+        <button type="button" class="button button--ghost" (click)="habitService.load()">
+          Tentar novamente
+        </button>
+      </p>
+    }
+    @if (habitService.loading() && !habits().length) {
+      <p role="status">Carregando hábitos…</p>
+    } @else if (filteredHabits().length) {
       <app-habit-grid
         class="habits-page__grid"
         [habits]="filteredHabits()"
@@ -58,7 +70,7 @@
         (remove)="requestDelete($event)"
         (statusChange)="toggleHabitStatus($event)"
       />
-    } @else {
+    } @else if (!habitService.error()) {
       <app-habit-empty-state (create)="openCreateDrawer()" />
     }
   </div>
@@ -67,6 +79,8 @@
 @if (drawerOpen()) {
   <app-habit-drawer
     [habit]="editingHabit()"
+    [saving]="habitService.saving()"
+    [error]="habitService.error()"
     (dismissed)="closeDrawer()"
     (formSubmitted)="saveHabit($event)"
   />
