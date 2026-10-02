@@ -1,0 +1,149 @@
+<section class="radial-view" aria-label="Planner circular de 24 horas">
+  <header class="radial-view__header">
+    <button
+      type="button"
+      class="button button--ghost"
+      aria-label="Dia anterior"
+      (click)="dayChanged.emit(-1)"
+    >
+      ‹
+    </button>
+    <h2>{{ dateLabel() }}</h2>
+    <button
+      type="button"
+      class="button button--ghost"
+      aria-label="Próximo dia"
+      (click)="dayChanged.emit(1)"
+    >
+      ›
+    </button>
+  </header>
+  <div
+    #dial
+    cdkDropList
+    id="radial-day"
+    class="radial-dial"
+    [cdkDropListSortingDisabled]="true"
+    (cdkDropListDropped)="dropUndatedEvent($event)"
+    (pointerdown)="startSwipe($event)"
+    (pointerup)="endSwipe($event)"
+    (pointercancel)="cancelSwipe()"
+    (pointerleave)="cancelSwipe()"
+  >
+    <svg
+      viewBox="0 0 340 340"
+      role="group"
+      aria-label="24 horas; toque em um compromisso para ver os detalhes"
+      (click)="selectOnDial($event)"
+      (keydown.escape)="hoveredHour.set(null)"
+    >
+      <circle class="radial-track" cx="170" cy="170" r="132" />
+      @for (tick of ticks; track $index) {
+        <line
+          class="radial-tick"
+          [attr.x1]="tick.inner.x"
+          [attr.y1]="tick.inner.y"
+          [attr.x2]="tick.outer.x"
+          [attr.y2]="tick.outer.y"
+        />
+      }
+      @for (label of labels; track label.hour) {
+        <text class="radial-label" [attr.x]="label.x" [attr.y]="label.y">
+          {{ label.hour.toString().padStart(2, '0') }}
+        </text>
+      }
+      @for (group of groups(); track group.id) {
+        <g
+          class="radial-event"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="
+            group.events[0].title +
+            ', ' +
+            (group | eventTime) +
+            (group.events.length > 1
+              ? ', ' + group.events.length + ' compromissos sobrepostos'
+              : '')
+          "
+          (click)="openGroup(group, $event)"
+          (keydown.enter)="openGroup(group, $event)"
+          (keydown.space)="$event.preventDefault(); openGroup(group, $event)"
+        >
+          @if (group.events.length === 1 && !group.events[0].endTime) {
+            <circle
+              class="radial-event__point"
+              [attr.cx]="group.point.x"
+              [attr.cy]="group.point.y"
+              r="6"
+            />
+          } @else {
+            <path class="radial-event__arc" [attr.d]="group.path" />
+          }
+          <path class="radial-event__hit" [attr.d]="group.path" />
+          @if (group.events.length > 1) {
+            <text class="radial-event__badge" [attr.x]="group.badge.x" [attr.y]="group.badge.y">
+              +{{ group.events.length - 1 }}
+            </text>
+          }
+        </g>
+      }
+      @if (today()) {
+        <circle class="radial-now" [attr.cx]="nowPoint().x" [attr.cy]="nowPoint().y" r="4" />
+      }
+      @if (hoveredHour() !== null) {
+        <path class="radial-preview" [attr.d]="previewPath()" />
+      }
+    </svg>
+    <div class="radial-center" aria-live="polite">
+      <strong>{{ hoveredHour() !== null ? timeForHour(hoveredHour()!) : timeLabel() }}</strong>
+      <span>{{ hoveredHour() !== null ? 'Solte para agendar' : 'Hora local · 24 horas' }}</span>
+    </div>
+  </div>
+  <p class="radial-view__hint">
+    {{
+      selectingSlot()
+        ? 'Toque na hora desejada ou escolha o horário na bandeja.'
+        : 'Toque nos arcos para ver os detalhes. Deslize para trocar de dia.'
+    }}
+  </p>
+</section>
+
+<dialog
+  #sheet
+  class="radial-sheet"
+  tabindex="-1"
+  aria-labelledby="radial-sheet-title"
+  (click)="onBackdrop($event)"
+  (keydown.escape)="closeDetails()"
+  (close)="closeDetails()"
+>
+  <header>
+    <h2 id="radial-sheet-title">Compromissos</h2>
+    <button
+      type="button"
+      class="button button--ghost"
+      autofocus
+      (click)="closeDetails()"
+      aria-label="Fechar detalhes"
+    >
+      ×
+    </button>
+  </header>
+  @if (selectedGroup(); as group) {
+    @for (event of group.events; track event.id) {
+      <article>
+        <h3>{{ event.title }}</h3>
+        <p>{{ event | eventTime }} · Evento</p>
+        @if (event.description) {
+          <p>{{ event.description }}</p>
+        }
+        @if (event.location) {
+          <p>{{ event.location }}</p>
+        }
+        <button type="button" class="button button--secondary" (click)="editEvent(event)">
+          Editar
+        </button>
+      </article>
+    }
+  }
+</dialog>

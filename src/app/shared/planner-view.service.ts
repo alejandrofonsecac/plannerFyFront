@@ -22,7 +22,7 @@ export class PlannerViewService {
     {
       id: 'radial',
       label: 'Circular',
-      description: 'As 24 horas em um círculo, com as tarefas ao alcance da mão.',
+      description: 'As 24 horas em um círculo, com os eventos ao alcance da mão.',
     },
   ] as const;
   readonly display = signal<PlannerDisplay>(this.read());

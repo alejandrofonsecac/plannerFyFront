@@ -1,6 +1,6 @@
 <header class="card planner-header" [class.planner-header--radial]="radial()">
   <div class="planner-header__left">
-    <h1 class="planner-header__title">{{ pageTitle() }}</h1>
+    <h1 class="planner-header__title">Planner</h1>
   </div>
 
   <div class="planner-header__center">
@@ -40,38 +40,36 @@
       }
     </div>
 
-    @if (showsViewModes()) {
-      <div class="view-switcher" aria-label="Visualização do planner">
-        <button
-          type="button"
-          class="view-switcher__option"
-          [class.view-switcher__option--active]="viewMode() === 'daily'"
-          [attr.aria-pressed]="viewMode() === 'daily'"
-          (click)="setViewMode('daily')"
-        >
-          Diário
-        </button>
-        <button
-          type="button"
-          class="view-switcher__option"
-          [class.view-switcher__option--active]="viewMode() === 'weekly'"
-          [attr.aria-pressed]="viewMode() === 'weekly'"
-          (click)="setViewMode('weekly')"
-        >
-          Semanal
-        </button>
-      </div>
-    }
+    <div class="view-switcher" aria-label="Visualização do planner">
+      <button
+        type="button"
+        class="view-switcher__option"
+        [class.view-switcher__option--active]="viewMode() === 'daily'"
+        [attr.aria-pressed]="viewMode() === 'daily'"
+        (click)="viewModeChange.emit('daily')"
+      >
+        Diário
+      </button>
+      <button
+        type="button"
+        class="view-switcher__option"
+        [class.view-switcher__option--active]="viewMode() === 'weekly'"
+        [attr.aria-pressed]="viewMode() === 'weekly'"
+        (click)="viewModeChange.emit('weekly')"
+      >
+        Semanal
+      </button>
+    </div>
   </div>
 
   <div class="planner-header__right">
     <button
       type="button"
       class="button button--compact button--primary planner-header__primary-action"
-      (click)="primaryAction.emit(activeContent())"
+      (click)="newEvent.emit()"
     >
-      <mat-icon>{{ primaryActionConfig().icon }}</mat-icon>
-      <span>{{ primaryActionConfig().label }}</span>
+      <mat-icon>calendar_add_on</mat-icon>
+      <span>Novo evento</span>
     </button>
   </div>
 </header>

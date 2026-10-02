@@ -1,0 +1,46 @@
+<article
+  class="planner-event-card"
+  [class]="
+    'planner-event-card planner-event-card--' +
+    event().category +
+    (compact() ? ' planner-event-card--compact' : '')
+  "
+  [class.planner-event-card--point]="!event().endTime"
+  role="button"
+  tabindex="0"
+  (click)="editEvent()"
+  (keydown)="handleKeydown($event)"
+>
+  <button
+    type="button"
+    class="planner-event-card__remove"
+    (click)="removeEvent($event)"
+    [attr.aria-label]="'Remover ' + event().title"
+    title="Remover evento"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+
+  <div class="planner-event-card__main">
+    <p class="planner-event-card__title" [class.line-through]="event().completed">
+      {{ event().title }}
+    </p>
+    @if (!compact() && event().description) {
+      <p class="planner-event-card__description">{{ event().description }}</p>
+    }
+  </div>
+
+  <div class="planner-event-card__metadata">
+    <p class="planner-event-card__time">{{ event() | eventTime }}</p>
+    @if (event().priority) {
+      <span>{{ event().priority }}</span>
+    }
+    @if (event().completed) {
+      <span>Concluído</span>
+    }
+    @if (event().isRecurring || event().recurrenceRule) {
+      <span title="Recorrente" aria-label="Recorrente">↻</span>
+    }
+    <span class="planner-event-card__category">{{ categoryLabel() }}</span>
+  </div>
+</article>

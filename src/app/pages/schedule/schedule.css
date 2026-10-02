@@ -7,23 +7,10 @@
 .schedule-page__content {
   margin: 0 auto;
   max-width: 1536px;
-  transition: padding-right 0.3s ease-in-out;
-}
-
-.schedule-content-switcher {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: 20px;
 }
 
 .schedule-page__main {
   margin-top: 16px;
-}
-
-@media (min-width: 1024px) {
-  .schedule-page__content--task-detail {
-    padding-right: 368px;
-  }
 }
 
 @media (max-width: 1024px) {
@@ -41,9 +28,5 @@
   .schedule-page__main {
     max-width: 100%;
     width: 100%;
-  }
-
-  .schedule-content-switcher {
-    margin-top: 12px;
   }
 }

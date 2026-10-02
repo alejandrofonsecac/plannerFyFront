@@ -12,12 +12,6 @@ export const NAVIGATION_SECTIONS: readonly NavigationSectionsModel[] = [
     items: [
       { icon: 'view_kanban', label: 'Planner', url: '/schedule' },
       { icon: 'calendar_month', label: 'Calendário', url: '/calendar' },
-      {
-        icon: 'check_circle',
-        label: 'Tarefas',
-        url: '/schedule',
-        queryParams: { view: 'tarefas' },
-      },
       { icon: 'target', label: 'Metas Semanais', url: '/goals' },
       { icon: 'self_improvement', label: 'Hábitos', url: '/habits' },
       { icon: 'note', label: 'Notas', url: '/notes' },

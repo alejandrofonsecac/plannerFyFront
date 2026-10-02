@@ -1,0 +1,52 @@
+<div class="planner-event-tray" [attr.aria-busy]="busy()">
+  @if (selectedEvent(); as event) {
+    <form class="planner-event-scheduler" (submit)="$event.preventDefault(); schedule()">
+      <label class="form-field">
+        Agendar: {{ event.title }}
+        <select
+          class="input-control"
+          [value]="selectedTime()"
+          [disabled]="busy()"
+          (change)="chooseTime($event)"
+        >
+          @for (slot of availability().slots; track slot.startTime) {
+            <option [value]="slot.startTime" [disabled]="!slot.available">
+              {{ slot.startTime }}{{ slot.available ? '' : ' · ocupado' }}
+            </option>
+          }
+        </select>
+      </label>
+      <div class="planner-event-scheduler__actions">
+        <button
+          type="button"
+          class="button button--secondary"
+          [disabled]="busy()"
+          (click)="eventEdited.emit(event)"
+        >
+          Editar / concluir
+        </button>
+        <button type="submit" class="button button--primary" [disabled]="!canSchedule()">
+          {{ busy() ? 'Salvando…' : 'Agendar' }}
+        </button>
+        <button
+          type="button"
+          class="button button--ghost"
+          [disabled]="busy()"
+          (click)="selectedEventChange.emit(null)"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+  }
+  <p class="planner-event-message" role="status">{{ message() }}</p>
+  <app-planner-undated-events
+    [events]="events()"
+    [connectedDropListIds]="connectedDropListIds()"
+    [dragEnabled]="!busy()"
+    [selectedEventId]="selectedEvent()?.id ?? null"
+    (eventSelected)="toggleSelection($event)"
+    (dragMoved)="dragMoved.emit($event)"
+    (dragEnded)="dragEnded.emit()"
+  />
+</div>
