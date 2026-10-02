@@ -42,16 +42,19 @@
           }
         </label>
 
+        <label class="form-field">Prioridade (opcional)
+          <select class="input-control" name="priority" [(ngModel)]="draft.priority">
+            <option value="">Sem prioridade</option><option>Alta</option><option>Média</option><option>Normal</option>
+          </select>
+        </label>
+        <button type="button" class="button button--secondary" (click)="draft.date = ''; draft.startTime = ''; draft.endTime = ''">Sem data</button>
         <div class="calendar-event-form__schedule-fields">
           <label class="form-field">
-            Data <span aria-hidden="true">*</span>
+            Data (opcional)
             <input class="input-control" type="date" name="event-date" [(ngModel)]="draft.date" />
-            @if (submitted && !draft.date) {
-              <small class="calendar-event-form__error">Escolha uma data.</small>
-            }
           </label>
           <label class="form-field">
-            Início <span aria-hidden="true">*</span>
+            Início (opcional)
             <input
               class="input-control"
               type="time"
@@ -60,14 +63,31 @@
             />
           </label>
           <label class="form-field">
-            Término <span aria-hidden="true">*</span>
+            Término (opcional)
             <input class="input-control" type="time" name="event-end" [(ngModel)]="draft.endTime" />
           </label>
         </div>
-        @if (submitted && draft.startTime >= draft.endTime) {
+        @if (submitted && draft.endTime && draft.startTime >= draft.endTime) {
           <small class="calendar-event-form__error"
             >O horário final deve ser posterior ao horário inicial.</small
           >
+        }
+
+        @if (!event()) {
+          <app-recurrence-field
+            [(value)]="recurrence"
+            [startDate]="draft.date"
+            [disabled]="saving()"
+          />
+        } @else if (event()?.isRecurring || event()?.recurrenceRule) {
+          <p>{{ recurrenceLabel(event()!) }} · As alterações valem apenas para esta ocorrência.</p>
+        }
+          <label
+            ><input type="checkbox" name="completed" [(ngModel)]="draft.completed" /> Marcar como
+            concluído</label
+          >
+        @if (validationError() || error()) {
+          <p class="calendar-event-form__error" role="alert">{{ validationError() || error() }}</p>
         }
 
         <div class="calendar-event-form__meta-fields">
@@ -115,7 +135,7 @@
         <button type="button" class="button button--secondary" (click)="dismissed.emit()">
           Cancelar
         </button>
-        <button type="submit" class="button button--primary">
+        <button type="submit" class="button button--primary" [disabled]="saving()">
           {{ event() ? 'Salvar alterações' : 'Criar evento' }}
         </button>
       </footer>

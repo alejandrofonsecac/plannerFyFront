@@ -51,6 +51,8 @@ export class Calendar implements OnInit {
   readonly view = signal<CalendarView>('month');
   readonly referenceDate = signal(startOfDay(new Date()));
   readonly selectedDate = signal(startOfDay(new Date()));
+  readonly saving = this.calendarEventService.saving;
+  readonly error = this.calendarEventService.error;
   readonly events = this.calendarEventService.events;
   readonly dataLoadFailed = signal(false);
   readonly selectedEvent = signal<CalendarEvent | null>(null);
@@ -70,6 +72,7 @@ export class Calendar implements OnInit {
     const entries = new Map<string, CalendarEvent[]>();
 
     for (const event of this.events()) {
+      if (!event.date) continue;
       const dayEvents = entries.get(event.date) ?? [];
       dayEvents.push(event);
       entries.set(event.date, dayEvents);
@@ -81,17 +84,13 @@ export class Calendar implements OnInit {
     return entries;
   });
 
-  readonly selectedDayEvents = computed(() => 
-    this.eventsForDate(toDateKey(this.selectedDate()))
-  );
+  readonly selectedDayEvents = computed(() => this.eventsForDate(toDateKey(this.selectedDate())));
 
   readonly monthLabel = computed(() =>
     this.capitalize(MONTH_FORMATTER.format(this.referenceDate())),
   );
 
-  readonly weekLabel = computed(() => 
-    this.formatWeekRange(this.weekDays())
-  );
+  readonly weekLabel = computed(() => this.formatWeekRange(this.weekDays()));
 
   readonly selectedDateLabel = computed(() =>
     this.capitalize(DAY_FORMATTER.format(this.selectedDate())),
@@ -161,6 +160,7 @@ export class Calendar implements OnInit {
 
   openEvent(event: CalendarEvent, mouseEvent?: MouseEvent): void {
     mouseEvent?.stopPropagation();
+    if (!event.date) return;
     const date = fromDateKey(event.date);
     this.selectedDate.set(date);
     this.selectedEvent.set(event);
@@ -172,6 +172,7 @@ export class Calendar implements OnInit {
   }
 
   closeForm(): void {
+    if (this.saving()) return;
     this.formOpen.set(false);
     this.editingEvent.set(null);
   }
@@ -183,10 +184,11 @@ export class Calendar implements OnInit {
       const updatedEvent = { ...eventBeingEdited, ...draft };
       if (!(await this.calendarEventService.update(updatedEvent))) return;
       this.selectedEvent.set(updatedEvent);
-      this.selectedDate.set(fromDateKey(updatedEvent.date));
+      if (updatedEvent.date) this.selectedDate.set(fromDateKey(updatedEvent.date));
+      else this.selectedEvent.set(null);
     } else {
       if (!(await this.calendarEventService.create(draft))) return;
-      this.selectedDate.set(fromDateKey(draft.date));
+      if (draft.date) this.selectedDate.set(fromDateKey(draft.date));
     }
     this.closeForm();
   }
@@ -248,11 +250,10 @@ export class Calendar implements OnInit {
   }
 
   eventClass(event: CalendarEvent, baseClass: string): string {
-    return `${baseClass} ${baseClass}--${event.category}`;
+    return `${baseClass} ${baseClass}--${event.category}${event.completed ? ' calendar-event--completed' : ''}`;
   }
 
   eventSourceLabel(event: CalendarEvent): string {
-    if (this.isTask(event)) return 'Tarefa';
     return event.source === 'google' ? 'Google Calendar' : 'Meu calendário';
   }
 
@@ -261,13 +262,12 @@ export class Calendar implements OnInit {
     return ((startMinutes - WEEK_START_HOUR * 60) / 60) * PIXELS_PER_HOUR;
   }
 
-  isTask(event: CalendarEvent): boolean {
-    return String(event.id).startsWith('task-');
-  }
-
   eventHeight(event: CalendarEvent): number {
     const startMinutes = Math.max(WEEK_START_HOUR * 60, timeToMinutes(event.startTime));
-    const endMinutes = Math.min(WEEK_END_HOUR * 60, timeToMinutes(event.endTime));
+    const endMinutes = Math.min(
+      WEEK_END_HOUR * 60,
+      timeToMinutes(event.endTime ?? event.startTime),
+    );
     return Math.max(28, ((endMinutes - startMinutes) / 60) * PIXELS_PER_HOUR);
   }
 

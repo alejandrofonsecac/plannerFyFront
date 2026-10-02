@@ -15,6 +15,10 @@
       </button>
     </header>
 
+    @if (error() && !formOpen()) {
+      <p role="alert">{{ error() }}</p>
+    }
+
     <div class="calendar-toolbar" aria-label="Controles do calendário">
       <div class="calendar-toolbar__navigation">
         <button
@@ -110,9 +114,9 @@
                         type="button"
                         [class]="eventClass(event, 'calendar-month__event')"
                         (click)="openEvent(event, $event)"
-                        [attr.aria-label]="event.title + ', ' + event.startTime"
+                        [attr.aria-label]="event.title + ', ' + (event.startTime ?? 'Sem horário')"
                       >
-                        <span>{{ event.startTime }}</span
+                        <span>{{ event.startTime ?? 'Sem horário' }}</span
                         >{{ event.title }}
                       </button>
                     }
@@ -142,8 +146,8 @@
                     [class.calendar-week__day-header--selected]="isSelected(day)"
                     (click)="selectDay(day)"
                   >
-                    <span>{{ weekdayLabel(day) }}</span
-                    ><strong>{{ day.getDate() }}</strong>
+                    <span>{{ weekdayLabel(day) }}</span>
+                    <strong>{{ day.getDate() }}</strong>
                   </button>
                 }
               </div>
@@ -171,11 +175,17 @@
                         [style.height.px]="eventHeight(event)"
                         (click)="openEvent(event, $event)"
                         [attr.aria-label]="
-                          event.title + ', ' + event.startTime + ' até ' + event.endTime
+                          event.title +
+                          ', ' +
+                          (event.startTime ?? 'Sem horário') +
+                          (event.endTime ? ' até ' + event.endTime : '')
                         "
                       >
                         <strong>{{ event.title }}</strong
-                        ><span>{{ event.startTime }} – {{ event.endTime }}</span>
+                        ><span
+                          >{{ event.startTime ?? 'Sem horário'
+                          }}{{ event.endTime ? ' – ' + event.endTime : '' }}</span
+                        >
                       </button>
                     }
                   </div>
@@ -196,8 +206,18 @@
               eventSourceLabel(event)
             }}</span>
             <h2>{{ event.title }}</h2>
+            @if (event.priority) {
+              <p>Prioridade: {{ event.priority }}</p>
+            }
+            @if (event.completed) {
+              <p>Concluído</p>
+            }
+            @if (event.isRecurring || event.recurrenceRule) {
+              <p>↻ Recorrente · Conclusão independente por ocorrência</p>
+            }
             <p class="calendar-panel__event-time">
-              <mat-icon>schedule</mat-icon>{{ event.startTime }} – {{ event.endTime }}
+              <mat-icon>schedule</mat-icon>{{ event.startTime ?? 'Sem horário'
+              }}{{ event.endTime ? ' – ' + event.endTime : '' }}
             </p>
             <p class="calendar-panel__event-date">
               <mat-icon>calendar_today</mat-icon>{{ selectedDateLabel() }}
@@ -210,7 +230,7 @@
             @if (event.description) {
               <p class="calendar-panel__event-description">{{ event.description }}</p>
             }
-            @if (!isTask(event)) {
+            @if (!event.readOnly) {
               <div class="calendar-panel__event-actions">
                 <button
                   type="button"
@@ -279,9 +299,7 @@
         }
 
         @if (dataLoadFailed()) {
-          <p class="calendar-panel__load-warning" role="status">
-            Falha ao carregar eventos ou tarefas.
-          </p>
+          <p class="calendar-panel__load-warning" role="status">Falha ao carregar eventos.</p>
         }
 
         <section class="calendar-panel__calendars">
@@ -311,6 +329,8 @@
     [event]="editingEvent()"
     [initialDate]="toDateKey(selectedDate())"
     (formSubmitted)="saveEvent($event)"
+    [saving]="saving()"
+    [error]="error()"
     (dismissed)="closeForm()"
   />
 }
@@ -329,7 +349,7 @@
     >
       <mat-icon>delete_outline</mat-icon>
       <h2 id="delete-event-title">Excluir evento?</h2>
-      <p>“{{ event.title }}” será removido do seu calendário.</p>
+      <p>“{{ event.title }}” será removido do seu calendário. As outras ocorrências permanecem.</p>
       <div>
         <button type="button" class="button button--secondary" (click)="cancelDeletion()">
           Cancelar
