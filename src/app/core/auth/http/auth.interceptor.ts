@@ -1,9 +1,15 @@
 import { DOCUMENT } from '@angular/common';
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
+import { catchError, from, of, switchMap, throwError } from 'rxjs';
 import { API_BASE_URL } from '../../data-access/api-client.service';
-import { AuthSession } from '../session/auth-session.service';
+import { SESSION_PATHS } from '../data-access/session-api.service';
+import {
+  AuthSession,
+  isUnauthorized,
+  unauthorized,
+  type SessionCredential,
+} from '../session/auth-session.service';
 
 /** Match the exact API origin and path boundary, never a string prefix host. */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
@@ -16,32 +22,49 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     target.origin === base.origin &&
     (target.pathname === basePath || target.pathname.startsWith(basePath + '/'));
 
-  if (!isApi){
+  if (!isApi) {
     return next(request);
-  } 
+  }
 
   const relativePath = target.pathname.slice(basePath.length).replace(/\/$/, '');
 
-  if (relativePath === '/users/login' || relativePath === '/users/register'){
+  // Session endpoints use the HttpOnly cookie; their 401 must not trigger another refresh.
+  if (SESSION_PATHS.has(relativePath)) {
     return next(request);
-  } 
-
-  const session = inject(AuthSession);
-  const token = session.accessToken();
-
-  if (!token) {
-    return throwError(
-      () => new HttpErrorResponse({ status: 401, statusText: 'Authentication required' }),
-    );
   }
 
-  return next(request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })).pipe(
-    catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse && error.status === 401){
-        session.reject(token);
-      }
-        
-      return throwError(() => error);
-    }),
+  const session = inject(AuthSession);
+
+  if (!session.user()) {
+    return throwError(unauthorized);
+  }
+
+  const send = (credential: SessionCredential) => next(withBearer(request, credential.token));
+  // The original request is repeated at most once; a second 401 ends the session.
+  const retryOnce = (credential: SessionCredential) =>
+    send(credential).pipe(
+      catchError((error: unknown) => {
+        if (isUnauthorized(error)) session.reject(credential.token);
+        return throwError(() => error);
+      }),
+    );
+
+  // A fresh token is sent synchronously; only an expired one waits for the shared renewal.
+  const ready = session.credential();
+
+  return (ready ? of(ready) : from(session.ensureCredential())).pipe(
+    switchMap((credential) =>
+      send(credential).pipe(
+        catchError((error: unknown) =>
+          isUnauthorized(error)
+            ? from(session.recover(credential)).pipe(switchMap(retryOnce))
+            : throwError(() => error),
+        ),
+      ),
+    ),
   );
 };
+
+function withBearer<T>(request: HttpRequest<T>, token: string): HttpRequest<T> {
+  return request.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+}

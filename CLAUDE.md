@@ -12,8 +12,9 @@ compartilhadas de arquitetura, contratos e segurança.
   `models/`, `data-access/`, `session/`, `routing/`, `http/` e `testing/`.
 - API: valide controllers e DTOs do backend antes de consumir. Não replique regras de
   negócio no navegador nem transforme falhas de API em sucesso local.
-- Sessão: token somente em memória, enviado apenas à API configurada. Consulte
-  [AUTHENTICATION.md](AUTHENTICATION.md).
+- Sessão: access token somente em memória, enviado apenas à API configurada e
+  renovado pelo cookie HttpOnly via `/users/refresh`. Consulte
+  [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md).
 - Agenda: consulte o [mapa da funcionalidade](src/app/pages/schedule/README.md) quando
   trabalhar nela.
 

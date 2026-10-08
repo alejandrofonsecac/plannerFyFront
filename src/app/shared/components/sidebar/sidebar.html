@@ -77,7 +77,10 @@
         <mat-icon class="sidebar-symbol sidebar-symbol--small">settings</mat-icon>
       </button>
     </div>
-    <button type="button" class="sidebar-nav-item" (click)="auth.logout()"><mat-icon aria-hidden="true">logout</mat-icon><span>Sair da conta</span></button>
+    <button type="button" class="sidebar-nav-item" (click)="auth.logout()" [disabled]="auth.logoutPending()"><mat-icon aria-hidden="true">logout</mat-icon><span>{{ auth.logoutPending() ? 'Saindo…' : 'Sair da conta' }}</span></button>
+    @if (auth.logoutFailed()) {
+      <p class="sidebar-logout-error" role="alert">Não foi possível sair. Tente novamente.</p>
+    }
   </footer>
 
   <button

@@ -32,5 +32,5 @@ não é um servidor de hospedagem para produção.
 
 - [Índice de documentação](docs/README.md)
 - [HTTPS e proxy](docs/HTTPS_SETUP.md)
-- [Autenticação e limitações da sessão](docs/AUTHENTICATION.md)
+- [Autenticação e ciclo da sessão](docs/AUTHENTICATION.md)
 - [Guia de desenvolvimento](AGENTS.md)

@@ -15,11 +15,19 @@ import {
 } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService, authErrorMessage } from '../data-access/auth.service';
-import { AuthSession, AUTH_REDIRECT } from '../session/auth-session.service';
+import { AuthSession, AUTH_REDIRECT, AUTH_SESSION_LOCK } from '../session/auth-session.service';
 import { authInterceptor } from '../http/auth.interceptor';
 import { authGuard, authChildGuard, guestGuard, safeReturnUrl } from '../routing/auth.guard';
 import type { AuthResponse } from '../models/auth.model';
 import { API_BASE_URL } from '../../data-access/api-client.service';
+
+const API = 'http://localhost:8080';
+const unauthorized = { status: 401, statusText: 'Unauthorized' };
+const noContent = { status: 204, statusText: 'No Content' };
+const unavailable = { status: 503, statusText: 'Unavailable' };
+
+/** Lets promise-based renewal steps run with real timers. */
+const settle = () => new Promise<void>((resolve) => setTimeout(resolve));
 
 function response(token = 'token-a', name = 'Ana'): AuthResponse {
   return {
@@ -36,15 +44,18 @@ describe('authentication boundary', () => {
   let client: HttpClient;
   let service: AuthService;
   const redirect = vi.fn();
+  const lock = vi.fn(<T>(task: () => Promise<T>) => task());
 
   beforeEach(() => {
     redirect.mockReset();
+    lock.mockClear();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         provideRouter([]),
         { provide: AUTH_REDIRECT, useValue: redirect },
+        { provide: AUTH_SESSION_LOCK, useValue: lock },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -58,6 +69,32 @@ describe('authentication boundary', () => {
     vi.useRealTimers();
   });
 
+  /** Moves the clock past the access token deadline without faking timers. */
+  function expireToken() {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + 3_600_000);
+  }
+
+  function expectSessionRequest(path: 'refresh' | 'logout') {
+    const request = http.expectOne(`${API}/users/${path}`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    expect(request.request.headers.get('X-PlannerFy-Session')).toBe('1');
+    expect(request.request.withCredentials).toBe(true);
+    expect(request.request.body).toEqual({});
+    return request;
+  }
+
+  function collectErrors(...paths: string[]): number[] {
+    const statuses: number[] = [];
+    for (const path of paths) {
+      client
+        .get(`${API}/${path}`)
+        .subscribe({ error: (error: HttpErrorResponse) => statuses.push(error.status) });
+    }
+    return statuses;
+  }
+
   it.each(['login', 'register'] as const)(
     'connects %s and sends only credentials',
     async (mode) => {
@@ -66,7 +103,7 @@ describe('authentication boundary', () => {
         email: ' ANA@example.com ',
         password: ' secret-password ',
       });
-      const request = http.expectOne('http://localhost:8080/users/' + mode);
+      const request = http.expectOne(`${API}/users/${mode}`);
       expect(request.request.method).toBe('POST');
       expect(request.request.headers.has('Authorization')).toBe(false);
       expect(request.request.headers.get('X-PlannerFy-Session')).toBe('1');
@@ -93,7 +130,7 @@ describe('authentication boundary', () => {
   it('uses Bearer for private API calls, including the current profile', () => {
     session.start(response());
     service.me().subscribe();
-    const request = http.expectOne('http://localhost:8080/users/me');
+    const request = http.expectOne(`${API}/users/me`);
     expect(request.request.headers.get('Authorization')).toBe('Bearer token-a');
     request.flush(response().user);
   });
@@ -111,72 +148,200 @@ describe('authentication boundary', () => {
   });
 
   it('blocks private API calls before they are sent when no session exists', () => {
-    let status = 0;
-    client
-      .get('http://localhost:8080/notes')
-      .subscribe({ error: (error: HttpErrorResponse) => (status = error.status) });
-    http.expectNone('http://localhost:8080/notes');
-    expect(status).toBe(401);
+    const statuses = collectErrors('notes');
+    http.expectNone(`${API}/notes`);
+    expect(statuses).toEqual([401]);
   });
 
-  it('clears identity on 401 and performs one full navigation to discard feature caches', () => {
+  it('renews once on 401, shares the refresh and repeats each request once', async () => {
     session.start(response());
-    client.get('http://localhost:8080/notes').subscribe({ error: () => undefined });
-    client.get('http://localhost:8080/goals').subscribe({ error: () => undefined });
-    http
-      .match(() => true)
-      .forEach((request) => request.flush({}, { status: 401, statusText: 'Unauthorized' }));
+    const results: unknown[] = [];
+    client.get(`${API}/notes`).subscribe((body) => results.push(body));
+    client.get(`${API}/goals`).subscribe((body) => results.push(body));
+    http.match(() => true).forEach((request) => request.flush({}, unauthorized));
+    await settle();
+    expectSessionRequest('refresh').flush(response('token-b'));
+    await settle();
+    const retries = http.match(() => true);
+    expect(retries.map((request) => request.request.headers.get('Authorization'))).toEqual([
+      'Bearer token-b',
+      'Bearer token-b',
+    ]);
+    retries.forEach((request) => request.flush(['ok']));
+    expect(results).toEqual([['ok'], ['ok']]);
+    expect(session.accessToken()).toBe('token-b');
+    expect(lock).toHaveBeenCalledOnce();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('renews an expired token before sending the request', async () => {
+    session.start(response());
+    expireToken();
+    expect(session.accessToken()).toBeNull();
+    expect(session.user()?.name).toBe('Ana');
+    client.get(`${API}/notes`).subscribe();
+    http.expectNone(`${API}/notes`);
+    await settle();
+    expectSessionRequest('refresh').flush(response('token-b'));
+    await settle();
+    const request = http.expectOne(`${API}/notes`);
+    expect(request.request.headers.get('Authorization')).toBe('Bearer token-b');
+    request.flush([]);
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('ends the session with one full navigation when the refresh is rejected', async () => {
+    session.start(response());
+    const statuses = collectErrors('notes', 'goals');
+    http.match(() => true).forEach((request) => request.flush({}, unauthorized));
+    await settle();
+    expectSessionRequest('refresh').flush({ code: 'REFRESH_UNAVAILABLE' }, unauthorized);
+    await settle();
+    expect(statuses).toEqual([401, 401]);
     expect(session.user()).toBeNull();
     expect(session.accessToken()).toBeNull();
+    expect(redirect).toHaveBeenCalledExactlyOnceWith('/login?reason=expired');
+  });
+
+  it('ends the session when the repeated request is still unauthorized', async () => {
+    session.start(response());
+    collectErrors('notes');
+    http.expectOne(`${API}/notes`).flush({}, unauthorized);
+    await settle();
+    expectSessionRequest('refresh').flush(response('token-b'));
+    await settle();
+    http.expectOne(`${API}/notes`).flush({}, unauthorized);
+    expect(session.user()).toBeNull();
+    expect(redirect).toHaveBeenCalledExactlyOnceWith('/login?reason=expired');
+  });
+
+  it('keeps the session when the refresh fails temporarily', async () => {
+    session.start(response());
+    expireToken();
+    const statuses = collectErrors('notes');
+    await settle();
+    expectSessionRequest('refresh').flush({}, unavailable);
+    await settle();
+    expect(statuses).toEqual([503]);
+    expect(session.user()?.name).toBe('Ana');
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('does not replay requests when the renewal returns another account', async () => {
+    session.start(response());
+    expireToken();
+    const statuses = collectErrors('notes');
+    await settle();
+    expectSessionRequest('refresh').flush(response('token-b', 'Bia'));
+    await settle();
+    http.expectNone(`${API}/notes`);
+    expect(statuses).toEqual([401]);
+    expect(session.user()).toBeNull();
     expect(redirect).toHaveBeenCalledExactlyOnceWith('/login?reason=expired');
   });
 
   it('does not end a session on forbidden or temporary server errors', () => {
     session.start(response());
     for (const status of [403, 500]) {
-      client.get('http://localhost:8080/notes').subscribe({ error: () => undefined });
-      http.expectOne('http://localhost:8080/notes').flush({}, { status, statusText: 'Error' });
+      client.get(`${API}/notes`).subscribe({ error: () => undefined });
+      http.expectOne(`${API}/notes`).flush({}, { status, statusText: 'Error' });
     }
     expect(session.accessToken()).toBe('token-a');
     expect(redirect).not.toHaveBeenCalled();
   });
 
-  it('ignores an old 401 after a new session is established', () => {
+  it('repeats a late 401 with the newer token of the same account without refreshing', async () => {
     session.start(response());
-    client.get('http://localhost:8080/notes').subscribe({ error: () => undefined });
+    client.get(`${API}/notes`).subscribe();
+    session.start(response('token-b'));
+    http.expectOne(`${API}/notes`).flush({}, unauthorized);
+    await settle();
+    const retry = http.expectOne(`${API}/notes`);
+    expect(retry.request.headers.get('Authorization')).toBe('Bearer token-b');
+    retry.flush([]);
+    http.expectNone(`${API}/users/refresh`);
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('ignores an old 401 from another account without clearing the new session', async () => {
+    session.start(response());
+    const statuses = collectErrors('notes');
     session.start(response('token-b', 'Bia'));
-    http
-      .expectOne('http://localhost:8080/notes')
-      .flush({}, { status: 401, statusText: 'Unauthorized' });
+    http.expectOne(`${API}/notes`).flush({}, unauthorized);
+    await settle();
+    http.expectNone(`${API}/notes`);
+    http.expectNone(`${API}/users/refresh`);
+    expect(statuses).toEqual([401]);
     expect(session.accessToken()).toBe('token-b');
     expect(session.user()?.name).toBe('Bia');
     expect(redirect).not.toHaveBeenCalled();
   });
 
-  it('expires automatically and also rechecks the deadline before using the token', () => {
-    vi.useFakeTimers();
-    session.start({ ...response(), expiresIn: 2 });
-    vi.advanceTimersByTime(2000);
-    expect(session.accessToken()).toBeNull();
+  it('restores the session from the refresh cookie at startup', async () => {
+    const pending = session.restore();
+    await settle();
+    expectSessionRequest('refresh').flush(response());
+    await pending;
+    expect(session.user()?.name).toBe('Ana');
+    expect(session.accessToken()).toBe('token-a');
+    expect(lock).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the visitor anonymous without redirecting when there is no session to restore', async () => {
+    const pending = session.restore();
+    await settle();
+    expectSessionRequest('refresh').flush({ code: 'REFRESH_UNAVAILABLE' }, unauthorized);
+    await pending;
     expect(session.user()).toBeNull();
-    expect(redirect).toHaveBeenCalledWith('/login?reason=expired');
+    expect(redirect).not.toHaveBeenCalled();
   });
 
-  it('detects expiration after a suspended tab wakes without running its timer', () => {
-    vi.useFakeTimers();
-    session.start({ ...response(), expiresIn: 1 });
-    vi.setSystemTime(Date.now() + 2000);
-    expect(session.accessToken()).toBeNull();
-    expect(redirect).toHaveBeenCalledWith('/login?reason=expired');
-  });
-
-  it('logout clears the session and a late authentication response cannot restore it', () => {
+  it('logout revokes the refresh cookie before clearing the session', async () => {
     session.start(response());
-    session.logout();
+    const pending = session.logout();
+    expect(session.logoutPending()).toBe(true);
+    await settle();
+    expectSessionRequest('logout').flush(null, noContent);
+    await pending;
     expect(session.user()).toBeNull();
     expect(session.accessToken()).toBeNull();
     expect(redirect).toHaveBeenCalledExactlyOnceWith('/login');
     expect(() => session.start(response())).toThrow();
+  });
+
+  it('keeps the session and allows a new attempt when logout fails', async () => {
+    session.start(response());
+    let pending = session.logout();
+    await settle();
+    expectSessionRequest('logout').flush({}, unavailable);
+    await pending;
+    expect(session.logoutFailed()).toBe(true);
+    expect(session.user()?.name).toBe('Ana');
+    expect(redirect).not.toHaveBeenCalled();
+
+    pending = session.logout();
+    expect(session.logoutFailed()).toBe(false);
+    await settle();
+    expectSessionRequest('logout').flush(null, noContent);
+    await pending;
+    expect(redirect).toHaveBeenCalledExactlyOnceWith('/login');
+  });
+
+  it('logout waits for a pending rotation before revoking the newest cookie', async () => {
+    session.start(response());
+    expireToken();
+    client.get(`${API}/notes`).subscribe();
+    await settle();
+    const pending = session.logout();
+    await settle();
+    http.expectNone(`${API}/users/logout`);
+    expectSessionRequest('refresh').flush(response('token-b'));
+    await settle();
+    http.expectOne(`${API}/notes`).flush([]);
+    expectSessionRequest('logout').flush(null, noContent);
+    await pending;
+    expect(redirect).toHaveBeenCalledExactlyOnceWith('/login');
+    expect(lock).toHaveBeenCalledTimes(2);
   });
 
   it('rejects invalid authentication responses without creating a session', () => {
@@ -198,6 +363,19 @@ describe('authentication boundary', () => {
     expect(TestBed.runInInjectionContext(() => authGuard(route, state))).toBe(true);
     const result = TestBed.runInInjectionContext(() => guestGuard(route, state));
     expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/home');
+  });
+
+  it('waits for the renewal before activating a private route with an expired token', async () => {
+    const route = {} as ActivatedRouteSnapshot;
+    const state = { url: '/notes' } as RouterStateSnapshot;
+    session.start(response());
+    expireToken();
+    const result = TestBed.runInInjectionContext(() => authGuard(route, state));
+    expect(result).toBeInstanceOf(Promise);
+    await settle();
+    expectSessionRequest('refresh').flush(response('token-b'));
+    expect(await result).toBe(true);
+    expect(session.accessToken()).toBe('token-b');
   });
 
   it.each([

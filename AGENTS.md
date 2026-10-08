@@ -24,7 +24,7 @@ servidor.
 - Recursos privados sempre são filtrados e autorizados pelo backend. A visibilidade
   de um botão ou guard Angular não concede permissão.
 - Tokens, senhas e segredos não vão para logs, URLs ou armazenamento persistente.
-  Preserve o fluxo de token em memória definido em [AUTHENTICATION.md](AUTHENTICATION.md).
+  Preserve o fluxo de token em memória definido em [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md).
 - Uma falha de escrita nunca vira sucesso local. Cache privado é limpo ao sair ou
   trocar de conta; lista vazia é um resultado válido, não motivo para dados fictícios.
 

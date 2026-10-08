@@ -161,6 +161,17 @@
   padding: 10px 12px;
 }
 
+.sidebar-footer .sidebar-nav-item:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.sidebar-logout-error {
+  color: var(--color-error);
+  font-size: 12px;
+  margin: 4px 9px 0;
+}
+
 .sidebar-profile {
   align-items: center;
   display: flex;
