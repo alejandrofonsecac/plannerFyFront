@@ -32,6 +32,7 @@ export class SettingsModal implements AfterViewInit {
     { id: 'notifications', label: 'Notificações', icon: 'notifications' },
     { id: 'privacy', label: 'Privacidade e segurança', icon: 'shield' },
   ];
+  readonly hours = Array.from({ length: 24 }, (_, hour) => hour);
   readonly dismissed = output<void>();
 
   private readonly closeButton = viewChild<ElementRef<HTMLButtonElement>>('closeButton');
@@ -75,6 +76,10 @@ export class SettingsModal implements AfterViewInit {
 
     this.setTab(nextTab.id);
     queueMicrotask(() => this.tabElements()[nextIndex]?.focus());
+  }
+
+  hourLabel(hour: number): string {
+    return `${hour.toString().padStart(2, '0')}:00`;
   }
 
   setTheme(theme: Theme): void {

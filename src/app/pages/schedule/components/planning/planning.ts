@@ -22,7 +22,13 @@ import type {
 import { HabitExecutionService } from '@pages/schedule/services/habit-execution.service';
 import { PlannerSchedulingService } from '@pages/schedule/services/planner-scheduling.service';
 import { PlannerService } from '@pages/schedule/services/planner.service';
-import { addDays, dateKey, formatPlannerDuration, startOfDay } from '@pages/schedule/utils';
+import {
+  addDays,
+  dateKey,
+  formatPlannerDuration,
+  freeSleepMinutes,
+  startOfDay,
+} from '@pages/schedule/utils';
 import { PlannerEventTray } from '../event-tray/planner-event-tray/planner-event-tray';
 import { PlannerEventForm } from '../events/planner-event-form/planner-event-form';
 import { PlannerEventList } from '../events/planner-event-list/planner-event-list';
@@ -93,10 +99,20 @@ export class Planning {
   readonly summary = computed(() => {
     const value = this.planner.summary();
     if (!value) return null;
+    // Free sleep time is not available time: drop it from the free total and the day's base.
+    const sleeping = freeSleepMinutes(value.events, (hour) => this.preferences.isSleepHour(hour));
+    const freeMinutes = Math.max(0, value.freeMinutes - sleeping);
+    const dayMinutes = 24 * 60 - sleeping;
     return {
       ...value,
+      freeMinutes,
+      freeTimePercentage: sleeping
+        ? dayMinutes > 0
+          ? Math.round((freeMinutes / dayMinutes) * 100)
+          : 0
+        : value.freeTimePercentage,
       plannedHours: formatPlannerDuration(value.plannedMinutes),
-      freeTime: formatPlannerDuration(value.freeMinutes),
+      freeTime: formatPlannerDuration(freeMinutes),
     };
   });
   readonly dailyDropListIds = computed(() =>

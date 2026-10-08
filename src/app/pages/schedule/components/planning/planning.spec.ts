@@ -6,6 +6,8 @@ import type { PlannerDaySummary, PlannerEvent } from '@pages/schedule/models';
 import { HabitExecutionService } from '@pages/schedule/services/habit-execution.service';
 import { PlannerSchedulingService } from '@pages/schedule/services/planner-scheduling.service';
 import { PlannerService } from '@pages/schedule/services/planner.service';
+import { PlannerViewService } from '@app/shared/planner-view.service';
+import { formatPlannerDuration } from '@pages/schedule/utils';
 import { Planning } from './planning';
 
 describe('undated event scheduling across planner displays', () => {
@@ -79,6 +81,22 @@ describe('undated event scheduling across planner displays', () => {
     fixture.detectChanges();
     return fixture.componentInstance;
   }
+
+  it('leaves free sleep hours out of the free-time summary', () => {
+    TestBed.inject(PlannerViewService).sleep.set({ enabled: true, start: 23, end: 7 });
+    planner.summary.set({
+      ...summary,
+      events: [{ ...undated, date: '2026-09-10', startTime: '06:00', endTime: '08:00' }],
+      plannedMinutes: 120,
+      freeMinutes: 1320,
+    });
+    const component = setup();
+    // 8h of sleep, 1h of it busy: 7h leave the free total and the day's base.
+    expect(component.summary()?.freeTime).toBe(formatPlannerDuration(1320 - 420));
+    expect(component.summary()?.freeTimePercentage).toBe(Math.round((900 / 1020) * 100));
+    planner.summary.set(summary);
+    TestBed.inject(PlannerViewService).sleep.set({ enabled: false, start: 23, end: 7 });
+  });
 
   it('schedules the selected event on the selected day and clears the selection', async () => {
     const component = setup();

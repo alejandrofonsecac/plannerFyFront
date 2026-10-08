@@ -40,6 +40,24 @@ export function durationInMinutes(event: EventTimes): number {
   return Math.max(0, toMinutes(event.endTime) - toMinutes(event.startTime));
 }
 
+/** Minutes of the day that fall in a sleep hour and are not covered by any timed event. */
+export function freeSleepMinutes(
+  events: readonly EventTimes[],
+  isSleepHour: (hour: number) => boolean,
+): number {
+  const busy = new Uint8Array(24 * 60);
+  for (const event of events) {
+    if (!event.startTime) continue;
+    const end = Math.min(busy.length, eventEndMinutes(event));
+    busy.fill(1, Math.max(0, toMinutes(event.startTime)), end);
+  }
+  let minutes = 0;
+  for (let minute = 0; minute < busy.length; minute++) {
+    if (!busy[minute] && isSleepHour(Math.floor(minute / 60))) minutes++;
+  }
+  return minutes;
+}
+
 /** End of the default one-slot block used when an undated event is placed on the timeline. */
 export function slotEndTime(startTime: string): string {
   return minutesToTime(

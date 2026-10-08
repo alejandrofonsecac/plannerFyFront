@@ -164,6 +164,57 @@
             }
           </fieldset>
         </section>
+
+        <section class="settings-section" aria-labelledby="settings-sleep-title">
+          <header class="settings-section__header">
+            <h3 id="settings-sleep-title">Horário de sono</h3>
+            <p>
+              Oculta as horas de sono da visualização diária. Horas com eventos continuam
+              visíveis.
+            </p>
+          </header>
+          <label class="planner-display-option settings-sleep__toggle">
+            <input
+              type="checkbox"
+              [checked]="plannerView.sleep().enabled"
+              (change)="plannerView.updateSleep({ enabled: $any($event.target).checked })"
+            />
+            <span
+              ><strong>Ocultar horário de sono</strong
+              ><small>Desativado por padrão. Salvo neste dispositivo.</small></span
+            >
+          </label>
+          @if (plannerView.sleep().enabled) {
+            <div class="settings-sleep__hours">
+              <label>
+                <span>Dormir às</span>
+                <select
+                  [value]="plannerView.sleep().start"
+                  (change)="plannerView.updateSleep({ start: +$any($event.target).value })"
+                >
+                  @for (hour of hours; track hour) {
+                    <option [value]="hour" [selected]="hour === plannerView.sleep().start">
+                      {{ hourLabel(hour) }}
+                    </option>
+                  }
+                </select>
+              </label>
+              <label>
+                <span>Acordar às</span>
+                <select
+                  [value]="plannerView.sleep().end"
+                  (change)="plannerView.updateSleep({ end: +$any($event.target).value })"
+                >
+                  @for (hour of hours; track hour) {
+                    <option [value]="hour" [selected]="hour === plannerView.sleep().end">
+                      {{ hourLabel(hour) }}
+                    </option>
+                  }
+                </select>
+              </label>
+            </div>
+          }
+        </section>
       } @else {
         <section class="settings-placeholder">
           <mat-icon aria-hidden="true">construction</mat-icon>

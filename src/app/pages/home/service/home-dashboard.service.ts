@@ -2,7 +2,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ApiClient } from '../../../core/data-access/api-client.service';
 import type { PlannerDayAvailability, PlannerEvent } from '@pages/schedule/models';
-import { parseLocalDate } from '@pages/schedule/utils';
+import { PlannerViewService } from '@app/shared/planner-view.service';
+import { parseLocalDate, toMinutes } from '@pages/schedule/utils';
 import type { WeatherResponse } from '../models/weather';
 import { WeatherService } from './weather/weatherService.service';
 
@@ -91,13 +92,21 @@ function tone(category: string): string {
 function dashboard(
   data: BackendDashboard | null,
   weather: WeatherResponse | null,
+  isSleepHour: (hour: number) => boolean,
 ): HomeDashboardData {
   const date = (data ? parseLocalDate(data.date) : null) ?? new Date();
   const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date);
   const month = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(date).replace('.', '');
   const availability = data?.planner.availability;
+  // Free sleep hours are not available time; busy ones stay so no commitment disappears.
+  const slots = (availability?.slots ?? []).filter(
+    (slot) => !slot.available || !isSleepHour(toMinutes(slot.startTime) / 60),
+  );
+  const hidesSleep = !!availability && slots.length < availability.slots.length;
+  const availableBlocks = slots.filter((slot) => slot.available).length;
+  
   return {
-    appName: 'Sereno',
+    appName: 'PlannerFy',
     pageName: 'Início',
     profile: { initials: '—', name: null },
     welcome: {
@@ -117,12 +126,14 @@ function dashboard(
     },
     availableTime: {
       label: 'TEMPO DISPONÍVEL',
-      value: availability ? `${availability.availableHours}h` : null,
+      value: availability ? `${hidesSleep ? availableBlocks : availability.availableHours}h` : null,
       description: availability
-        ? `${availability.availableBlocks} de ${availability.totalBlocks} blocos livres`
+        ? hidesSleep
+          ? `${availableBlocks} de ${slots.length} blocos livres`
+          : `${availability.availableBlocks} de ${availability.totalBlocks} blocos livres`
         : null,
       segments: availability
-        ? availability.slots.map((slot, index) => ({
+        ? slots.map((slot, index) => ({
             id: index + 1,
             status: slot.available ? 'free' : 'busy',
             label: `${slot.startTime} a ${slot.endTime}`,
@@ -190,7 +201,12 @@ export class HomeDashboardService {
   private readonly backendData = signal<BackendDashboard | null>(null);
   readonly error = signal<string | null>(null);
   readonly loading = signal(false);
-  readonly dashboard = computed(() => dashboard(this.backendData(), this.weatherService.weather()));
+  private readonly plannerView = inject(PlannerViewService);
+  readonly dashboard = computed(() =>
+    dashboard(this.backendData(), this.weatherService.weather(), (hour) =>
+      this.plannerView.isSleepHour(hour),
+    ),
+  );
   readonly weatherLoading = this.weatherService.loading;
   readonly weatherError = this.weatherService.error;
 

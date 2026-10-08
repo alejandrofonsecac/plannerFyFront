@@ -83,16 +83,35 @@ export class PlannerDayView {
     }).format(this.date()),
   );
   readonly slots = computed(() => {
-    if (this.preferences.display() !== 'periods') return PLANNER_DAY_SLOTS;
-    const period = this.periods.find((item) => item.id === this.activePeriod())!;
+    const period =
+      this.preferences.display() === 'periods'
+        ? this.periods.find((item) => item.id === this.activePeriod())!
+        : null;
     return PLANNER_DAY_SLOTS.filter((slot) => {
       const hour = toMinutes(slot.startTime) / 60;
-      return hour >= period.start && hour < period.end;
+      if (period && (hour < period.start || hour >= period.end)) return false;
+      // Sleep hours stay visible when they hold events, so nothing scheduled disappears.
+      return !this.preferences.isSleepHour(hour) || this.slotHasEvents(slot);
     });
   });
-  readonly segments = computed(() =>
-    plannerDaySegments(this.slots(), this.events(), this.expandedSegments()),
-  );
+  readonly sleepLabel = computed(() => {
+    const { enabled, start, end } = this.preferences.sleep();
+    if (!enabled || start === end) return null;
+    const time = (hour: number) => `${hour.toString().padStart(2, '0')}:00`;
+    return `Horário de sono oculto · ${time(start)} – ${time(end)}`;
+  });
+  /** Segments are built per contiguous run, since hidden sleep hours leave gaps. */
+  readonly segments = computed(() => {
+    const runs: PlannerTimeSlot[][] = [];
+    for (const slot of this.slots()) {
+      const run = runs.at(-1);
+      if (run && run[run.length - 1].endTime === slot.startTime) run.push(slot);
+      else runs.push([slot]);
+    }
+    return runs.flatMap((run) =>
+      plannerDaySegments(run, this.events(), this.expandedSegments()),
+    );
+  });
   /** Hours rendered as drop targets; condensed segments have none. */
   readonly visibleSlotTimes = computed(() =>
     this.segments().flatMap((segment) =>

@@ -35,6 +35,9 @@
       Horários livres em blocos compactos. Toque para expandir ou arraste um evento para agendar.
     </p>
   }
+  @if (sleepLabel(); as label) {
+    <p class="planner-day-view__hint">{{ label }}</p>
+  }
   <div class="planner-day-view__slots" [class.planner-day-view__slots--selecting]="selectingSlot()">
     @for (segment of segments(); track segment.id) {
       @if (segment.kind !== 'events') {
