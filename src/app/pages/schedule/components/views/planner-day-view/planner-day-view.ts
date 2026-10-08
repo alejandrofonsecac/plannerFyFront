@@ -69,6 +69,7 @@ export class PlannerDayView {
 
   readonly periods = PLANNER_PERIODS;
   readonly hourHeight = PLANNER_DAY_HOUR_HEIGHT;
+  readonly condensedHeight = 116;
   readonly activePeriod = signal<PlannerPeriodId>(periodAtHour(new Date().getHours()).id);
   readonly expandedSlots = signal<ReadonlySet<string>>(new Set());
   readonly expandedSegments = signal<ReadonlySet<string>>(new Set());

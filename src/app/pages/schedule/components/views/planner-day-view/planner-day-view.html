@@ -140,7 +140,7 @@
           </div>
         </div>
       } @else {
-        <div class="planner-segment planner-segment--condensed" [style.height.px]="2 * hourHeight">
+        <div class="planner-segment planner-segment--condensed" [style.height.px]="condensedHeight">
           <time class="planner-segment__time">{{ segment.slots[0].startTime }}</time>
           <div class="planner-segment__cards">
             @for (event of segment.events; track event.id) {
