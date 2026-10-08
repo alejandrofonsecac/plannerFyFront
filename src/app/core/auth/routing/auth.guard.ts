@@ -20,16 +20,27 @@ export function safeReturnUrl(value: string | null): string {
   return privatePaths.has(path) ? value : '/home';
 }
 
+/** Navigation UX only: the backend still authorizes every request. */
 export const authGuard: CanActivateFn = (_route, state) => {
   const session = inject(AuthSession);
-  return session.accessToken()
-    ? true
-    : inject(Router).createUrlTree(['/login'], {
-        queryParams: { returnUrl: safeReturnUrl(state.url) },
-      });
+  const router = inject(Router);
+  const login = () =>
+    router.createUrlTree(['/login'], {
+      queryParams: { returnUrl: safeReturnUrl(state.url) },
+    });
+
+  if (!session.user()) return login();
+  if (session.accessToken()) return true;
+
+  // Identity exists but the access token expired: wait for the shared renewal.
+  // A rejected renewal ends the session; a temporary failure keeps it for the next request.
+  return session.ensureCredential().then(
+    () => true,
+    () => (session.user() ? true : login()),
+  );
 };
 
 export const authChildGuard: CanActivateChildFn = authGuard;
 
 export const guestGuard: CanActivateFn = () =>
-  inject(AuthSession).accessToken() ? inject(Router).createUrlTree(['/home']) : true;
+  inject(AuthSession).user() ? inject(Router).createUrlTree(['/home']) : true;

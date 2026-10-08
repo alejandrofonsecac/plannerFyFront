@@ -39,7 +39,7 @@ encaminha essas chamadas pelo proxy em
 | Erro | Causa e solução |
 | --- | --- |
 | `426 HTTPS_REQUIRED` | Backend iniciado sem perfil `local` (ou com `prod`/`production`). Inicie com `local`. |
-| `403 SESSION_HEADER_REQUIRED` | Atualize o frontend e confirme que login/cadastro enviam `X-PlannerFy-Session: 1`. |
+| `403 SESSION_HEADER_REQUIRED` | Atualize o frontend e confirme que login, cadastro, refresh e logout enviam `X-PlannerFy-Session: 1`. |
 | `Invalid CORS request` | Defina `CORS_ALLOWED_ORIGINS=http://localhost:4200` e reinicie o backend. |
 | `Cannot POST /api/users/login` | Proxy não carregado. Pare o servidor Angular e execute `npm start` novamente na raiz do frontend. |
 | `ECONNREFUSED` ou 502 | Backend indisponível em `localhost:8080`. |

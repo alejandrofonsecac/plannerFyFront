@@ -86,6 +86,17 @@
   margin-bottom: 20px;
 }
 
+.app-drawer-mobile__link:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.app-drawer-mobile__error {
+  color: var(--color-error);
+  font-size: 12px;
+  margin: 4px 8px 0;
+}
+
 .app-drawer-mobile__section h2 {
   color: var(--color-text-sub);
   font-size: 10px;

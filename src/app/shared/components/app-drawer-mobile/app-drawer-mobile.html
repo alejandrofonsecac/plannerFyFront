@@ -60,7 +60,10 @@
       }
       <section class="app-drawer-mobile__section">
         <h2>{{ auth.user()?.name }}</h2>
-        <button type="button" class="app-drawer-mobile__link" (click)="auth.logout()"><mat-icon aria-hidden="true">logout</mat-icon><span>Sair da conta</span></button>
+        <button type="button" class="app-drawer-mobile__link" (click)="auth.logout()" [disabled]="auth.logoutPending()"><mat-icon aria-hidden="true">logout</mat-icon><span>{{ auth.logoutPending() ? 'Saindo…' : 'Sair da conta' }}</span></button>
+        @if (auth.logoutFailed()) {
+          <p class="app-drawer-mobile__error" role="alert">Não foi possível sair. Tente novamente.</p>
+        }
       </section>
     </nav>
 </aside>

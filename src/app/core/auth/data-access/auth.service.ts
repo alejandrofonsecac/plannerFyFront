@@ -5,6 +5,7 @@ import { API_BASE_URL } from '../../data-access/api-client.service';
 import type { AuthGateway, AuthMode } from '../../../pages/login/auth-gateway';
 import type { AuthCredentials, AuthResponse, AuthUser } from '../models/auth.model';
 import { AuthSession } from '../session/auth-session.service';
+import { SESSION_REQUEST, SESSION_TIMEOUT_MS } from './session-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService implements AuthGateway {
@@ -21,11 +22,8 @@ export class AuthService implements AuthGateway {
         : { email, password: credentials.password };
     const response = await firstValueFrom(
       this.http
-        .post<AuthResponse>(`${this.baseUrl}/users/${mode}`, body, {
-          headers: { 'X-PlannerFy-Session': '1' },
-          withCredentials: true,
-        })
-        .pipe(timeout(15_000)),
+        .post<AuthResponse>(`${this.baseUrl}/users/${mode}`, body, SESSION_REQUEST)
+        .pipe(timeout(SESSION_TIMEOUT_MS)),
     );
     this.session.start(response);
   }
