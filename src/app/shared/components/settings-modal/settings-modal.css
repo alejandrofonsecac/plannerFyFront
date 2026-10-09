@@ -282,6 +282,43 @@
   padding: 28px 32px 36px;
 }
 
+.settings-modal__sync {
+  align-items: center;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-sub);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  gap: 8px;
+  padding: 12px 32px;
+}
+
+.settings-modal__sync mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+
+.settings-modal__sync-error {
+  color: var(--color-error);
+}
+
+.settings-modal__sync-retry {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text-main);
+  cursor: pointer;
+  font: inherit;
+  margin-left: auto;
+  padding: 4px 10px;
+}
+
+.settings-modal__sync-retry:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+}
+
 .settings-section + .settings-section {
   border-top: 1px solid var(--color-border);
   margin-top: 32px;
@@ -497,6 +534,10 @@
 
   .settings-modal__panel {
     padding: 22px 18px 28px;
+  }
+
+  .settings-modal__sync {
+    padding: 12px 18px;
   }
 
   .settings-theme-grid {

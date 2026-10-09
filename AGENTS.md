@@ -42,6 +42,21 @@ servidor.
 - Preserve design tokens, acessibilidade por teclado e estados de carregamento, vazio,
   erro e sucesso. Não faça refatorações amplas fora do pedido.
 
+## Preferências por usuário
+
+Configurações de interface escolhidas pelo usuário pertencem à conta: são salvas pela
+API em `GET/PUT /users/me/preferences` e acompanham o usuário em qualquer dispositivo.
+O `localStorage` do navegador é apenas cache. Hoje fazem parte delas: tema, cor de
+destaque, visualização do planner, horário de sono e largura da barra lateral.
+
+**Em toda atualização, verifique se ela cria ou altera uma configuração do usuário; se
+sim, inclua-a nas preferências por usuário (backend + front + docs):** nova migration
+Flyway em `tb_user_preferences` com valor padrão para as linhas existentes, DTOs,
+validação e testes no backend; `UserPreferences` e `UserPreferencesService` no frontend;
+e o contrato em `.docs/preferences/README.md` (backend) e `docs/USER_PREFERENCES.md`
+(frontend). Rascunhos, abas abertas e outros estados temporários de tela não são
+preferências.
+
 ## Fluxo e validação
 
 1. Defina caso de uso, usuário, contrato e resultados (sucesso e erro).
