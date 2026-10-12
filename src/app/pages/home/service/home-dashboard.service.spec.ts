@@ -75,7 +75,7 @@ describe('HomeDashboardService sleep schedule', () => {
     dashboardService.load();
     expect(dashboardService.dashboard().availableTime.segments).toHaveLength(24);
 
-    TestBed.inject(PlannerViewService).sleep.set({ enabled: true, start: 23, end: 7 });
+    TestBed.inject(PlannerViewService).updateSleep({ enabled: true, start: 23, end: 7 });
     const available = dashboardService.dashboard().availableTime;
     expect(available.segments.map((segment) => segment.label)).toContain('06:00 a 07:00');
     expect(available.segments).toHaveLength(17);

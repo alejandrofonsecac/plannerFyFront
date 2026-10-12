@@ -83,7 +83,7 @@ describe('undated event scheduling across planner displays', () => {
   }
 
   it('leaves free sleep hours out of the free-time summary', () => {
-    TestBed.inject(PlannerViewService).sleep.set({ enabled: true, start: 23, end: 7 });
+    TestBed.inject(PlannerViewService).updateSleep({ enabled: true, start: 23, end: 7 });
     planner.summary.set({
       ...summary,
       events: [{ ...undated, date: '2026-09-10', startTime: '06:00', endTime: '08:00' }],
@@ -95,7 +95,7 @@ describe('undated event scheduling across planner displays', () => {
     expect(component.summary()?.freeTime).toBe(formatPlannerDuration(1320 - 420));
     expect(component.summary()?.freeTimePercentage).toBe(Math.round((900 / 1020) * 100));
     planner.summary.set(summary);
-    TestBed.inject(PlannerViewService).sleep.set({ enabled: false, start: 23, end: 7 });
+    TestBed.inject(PlannerViewService).updateSleep({ enabled: false, start: 23, end: 7 });
   });
 
   it('schedules the selected event on the selected day and clears the selection', async () => {

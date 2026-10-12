@@ -7,21 +7,32 @@ import { LocalClockService } from '@app/shared/local-clock.service';
 
 describe('planner display and period navigation', () => {
   const now = signal(new Date(2026, 8, 10, 6, 59));
-  beforeEach(() => {
-    localStorage.clear();
-    now.set(new Date(2026, 8, 10, 6, 59));
+  function configure() {
     TestBed.configureTestingModule({
       providers: [{ provide: LocalClockService, useValue: { now } }],
     });
+  }
+
+  /** Simula uma nova carga da página, que lê o cache local de novo. */
+  function reloadedPlannerView() {
+    TestBed.resetTestingModule();
+    configure();
+    return TestBed.inject(PlannerViewService);
+  }
+
+  beforeEach(() => {
+    localStorage.clear();
+    now.set(new Date(2026, 8, 10, 6, 59));
+    configure();
   });
 
-  it('defaults to compact and preserves the chosen display across service instances', () => {
+  it('defaults to compact and preserves the chosen display across page loads', () => {
     const preferences = TestBed.inject(PlannerViewService);
     expect(preferences.display()).toBe('compact');
     preferences.setDisplay('radial');
-    expect(TestBed.runInInjectionContext(() => new PlannerViewService()).display()).toBe('radial');
+    expect(reloadedPlannerView().display()).toBe('radial');
     localStorage.setItem('plannerfy-planner-display', 'invalid');
-    expect(TestBed.runInInjectionContext(() => new PlannerViewService()).display()).toBe('compact');
+    expect(reloadedPlannerView().display()).toBe('compact');
   });
 
   it('keeps each free hour as a compact scheduling slot', () => {

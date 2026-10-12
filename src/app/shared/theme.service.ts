@@ -1,5 +1,7 @@
 import { DOCUMENT } from '@angular/common';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, effect, inject } from '@angular/core';
+import { PreferenceStore } from '../core/preferences/preference-store.service';
+import { oneOf } from '../core/preferences/preference-values';
 
 export type Theme = 'light' | 'dark' | 'high-contrast' | 'system';
 export type AccentId = 'indigo' | 'teal' | 'orange' | 'pink' | 'blue';
@@ -40,12 +42,30 @@ export class ThemeService {
     { id: 'blue', label: 'Azul', color: '#2563EB', hoverColor: '#1D4ED8' },
   ];
 
-  readonly theme = signal<Theme>(this.getStoredTheme());
-  readonly accent = signal<AccentId>(this.getStoredAccent());
+  // Preferências da conta: veja docs/USER_PREFERENCES.md.
+  private readonly preferences = inject(PreferenceStore);
+  private readonly themePreference = this.preferences.define<Theme>({
+    key: 'theme',
+    defaultValue: 'light',
+    parse: oneOf(this.themeOptions.map((option) => option.id)),
+    storageKey: THEME_STORAGE_KEY,
+  });
+  private readonly accentPreference = this.preferences.define<AccentId>({
+    key: 'accent',
+    defaultValue: 'blue',
+    parse: oneOf(this.accentOptions.map((option) => option.id)),
+    storageKey: ACCENT_STORAGE_KEY,
+  });
+
+  readonly theme = this.themePreference.value;
+  readonly accent = this.accentPreference.value;
 
   constructor() {
     this.applyTheme(this.theme());
     this.applyAccent(this.accent());
+    // Também aplica os valores que chegam da conta após o login.
+    effect(() => this.applyTheme(this.theme()));
+    effect(() => this.applyAccent(this.accent()));
     this.systemColorScheme?.addEventListener('change', () => {
       if (this.theme() === 'system') this.applyTheme('system');
     });
@@ -56,27 +76,13 @@ export class ThemeService {
   }
 
   setTheme(theme: Theme): void {
-    this.theme.set(theme);
-    this.applyTheme(theme);
-    this.savePreference(THEME_STORAGE_KEY, theme);
+    this.themePreference.set(theme);
+    this.applyTheme(this.theme());
   }
 
   setAccent(accent: AccentId): void {
-    this.accent.set(accent);
-    this.applyAccent(accent);
-    this.savePreference(ACCENT_STORAGE_KEY, accent);
-  }
-
-  private getStoredTheme(): Theme {
-    const savedTheme = this.readPreference(THEME_STORAGE_KEY);
-    return this.themeOptions.some((option) => option.id === savedTheme) ? (savedTheme as Theme) : 'light';
-  }
-
-  private getStoredAccent(): AccentId {
-    const savedAccent = this.readPreference(ACCENT_STORAGE_KEY);
-    return this.accentOptions.some((option) => option.id === savedAccent)
-      ? (savedAccent as AccentId)
-      : 'blue';
+    this.accentPreference.set(accent);
+    this.applyAccent(this.accent());
   }
 
   private applyTheme(theme: Theme): void {
@@ -95,21 +101,5 @@ export class ThemeService {
     rootStyle.setProperty('--accent-color', accent.color);
     rootStyle.setProperty('--color-brand-primary', accent.color);
     rootStyle.setProperty('--color-brand-hover', accent.hoverColor);
-  }
-
-  private readPreference(key: string): string | null {
-    try {
-      return this.document.defaultView?.localStorage?.getItem(key) ?? null;
-    } catch {
-      return null;
-    }
-  }
-
-  private savePreference(key: string, value: string): void {
-    try {
-      this.document.defaultView?.localStorage?.setItem(key, value);
-    } catch {
-      // A interface continua funcional quando o armazenamento não está disponível.
-    }
   }
 }

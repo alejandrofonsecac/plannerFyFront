@@ -1,5 +1,6 @@
-import { DOCUMENT } from '@angular/common';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { PreferenceStore } from '../core/preferences/preference-store.service';
+import { isIntegerBetween, oneOf } from '../core/preferences/preference-values';
 
 export type PlannerDisplay = 'compact' | 'periods' | 'radial';
 
@@ -16,7 +17,6 @@ const DEFAULT_SLEEP: PlannerSleepSchedule = { enabled: false, start: 23, end: 7 
 
 @Injectable({ providedIn: 'root' })
 export class PlannerViewService {
-  private readonly document = inject(DOCUMENT);
   readonly options = [
     {
       id: 'compact',
@@ -34,17 +34,30 @@ export class PlannerViewService {
       description: 'As 24 horas em um círculo, com os eventos ao alcance da mão.',
     },
   ] as const;
-  readonly display = signal<PlannerDisplay>(this.read());
-  readonly sleep = signal<PlannerSleepSchedule>(this.readSleep());
+  // Preferências da conta: veja docs/USER_PREFERENCES.md.
+  private readonly preferences = inject(PreferenceStore);
+  private readonly displayPreference = this.preferences.define<PlannerDisplay>({
+    key: 'plannerDisplay',
+    defaultValue: 'compact',
+    parse: oneOf(this.options.map((option) => option.id)),
+    storageKey: STORAGE_KEY,
+  });
+  private readonly sleepPreference = this.preferences.define<PlannerSleepSchedule>({
+    key: 'sleep',
+    defaultValue: DEFAULT_SLEEP,
+    parse: parseSleep,
+    storageKey: SLEEP_STORAGE_KEY,
+  });
+
+  readonly display = this.displayPreference.value;
+  readonly sleep = this.sleepPreference.value;
 
   setDisplay(display: PlannerDisplay): void {
-    this.display.set(display);
-    this.write(STORAGE_KEY, display);
+    this.displayPreference.set(display);
   }
 
   updateSleep(changes: Partial<PlannerSleepSchedule>): void {
-    this.sleep.update((sleep) => ({ ...sleep, ...changes }));
-    this.write(SLEEP_STORAGE_KEY, JSON.stringify(this.sleep()));
+    this.sleepPreference.set({ ...this.sleep(), ...changes });
   }
 
   /** Whether the hour starting at `hour` falls within the configured sleep window. */
@@ -53,40 +66,17 @@ export class PlannerViewService {
     if (!enabled || start === end) return false;
     return start < end ? hour >= start && hour < end : hour >= start || hour < end;
   }
+}
 
-  private write(key: string, value: string): void {
-    try {
-      this.document.defaultView?.localStorage.setItem(key, value);
-    } catch {
-      /* A preferência continua ativa quando o armazenamento está indisponível. */
-    }
-  }
-
-  private readSleep(): PlannerSleepSchedule {
-    try {
-      const saved = JSON.parse(
-        this.document.defaultView?.localStorage.getItem(SLEEP_STORAGE_KEY) ?? 'null',
-      ) as Partial<PlannerSleepSchedule> | null;
-      const hour = (value: unknown, fallback: number) =>
-        Number.isInteger(value) && (value as number) >= 0 && (value as number) < 24
-          ? (value as number)
-          : fallback;
-      return {
-        enabled: saved?.enabled === true,
-        start: hour(saved?.start, DEFAULT_SLEEP.start),
-        end: hour(saved?.end, DEFAULT_SLEEP.end),
-      };
-    } catch {
-      return DEFAULT_SLEEP;
-    }
-  }
-
-  private read(): PlannerDisplay {
-    try {
-      const saved = this.document.defaultView?.localStorage.getItem(STORAGE_KEY);
-      return this.options.find((option) => option.id === saved)?.id ?? 'compact';
-    } catch {
-      return 'compact';
-    }
-  }
+/** Aceita horários parciais, completando com o padrão. */
+function parseSleep(value: unknown): PlannerSleepSchedule | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
+  const saved = value as Partial<Record<keyof PlannerSleepSchedule, unknown>>;
+  const hour = (candidate: unknown, fallback: number) =>
+    isIntegerBetween(candidate, 0, 23) ? candidate : fallback;
+  return {
+    enabled: saved.enabled === true,
+    start: hour(saved.start, DEFAULT_SLEEP.start),
+    end: hour(saved.end, DEFAULT_SLEEP.end),
+  };
 }

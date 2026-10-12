@@ -44,18 +44,19 @@ servidor.
 
 ## Preferências por usuário
 
-Configurações de interface escolhidas pelo usuário pertencem à conta: são salvas pela
-API em `GET/PUT /users/me/preferences` e acompanham o usuário em qualquer dispositivo.
-O `localStorage` do navegador é apenas cache. Hoje fazem parte delas: tema, cor de
-destaque, visualização do planner, horário de sono e largura da barra lateral.
+Configurações de interface escolhidas pelo usuário pertencem à conta e acompanham o
+usuário em qualquer dispositivo. A API guarda um documento JSON por conta
+(`GET`/`PATCH /users/me/preferences`) sem interpretar as chaves; o frontend define quais
+preferências existem, seus valores aceitos e padrões, e usa o `localStorage` só como cache.
 
 **Em toda atualização, verifique se ela cria ou altera uma configuração do usuário; se
-sim, inclua-a nas preferências por usuário (backend + front + docs):** nova migration
-Flyway em `tb_user_preferences` com valor padrão para as linhas existentes, DTOs,
-validação e testes no backend; `UserPreferences` e `UserPreferencesService` no frontend;
-e o contrato em `.docs/preferences/README.md` (backend) e `docs/USER_PREFERENCES.md`
-(frontend). Rascunhos, abas abertas e outros estados temporários de tela não são
-preferências.
+sim, registre-a como preferência por usuário.** Para uma preferência visual basta
+`PreferenceStore.define()` no serviço do frontend que é dono do estado, com chave
+`camelCase` estável, padrão e validação, além de testes e uma linha na tabela de
+`docs/USER_PREFERENCES.md` — sem migration nem mudança no backend. Se o valor passar a
+influenciar regras ou cálculos do servidor (disponibilidade, datas, limites), ele deixa
+de ser preferência visual: crie um campo próprio validado no backend. Rascunhos, abas
+abertas e outros estados temporários de tela não são preferências.
 
 ## Fluxo e validação
 
