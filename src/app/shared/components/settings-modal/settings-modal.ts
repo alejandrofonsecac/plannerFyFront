@@ -2,6 +2,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, HostList
 import { MatIconModule } from '@angular/material/icon';
 import { AccentId, Theme, ThemeService } from '../../theme.service';
 import { PlannerViewService } from '../../planner-view.service';
+import { UserPreferencesService } from '../../../core/preferences/user-preferences.service';
 
 type SettingsTabId =
   'appearance' | 'visualization' | 'language' | 'account' | 'notifications' | 'privacy';
@@ -23,6 +24,7 @@ interface SettingsTab {
 export class SettingsModal implements AfterViewInit {
   readonly themeService = inject(ThemeService);
   readonly plannerView = inject(PlannerViewService);
+  readonly preferences = inject(UserPreferencesService);
   readonly activeTab = signal<SettingsTabId>('appearance');
   readonly tabs: readonly SettingsTab[] = [
     { id: 'visualization', label: 'Visualização', icon: 'view_quilt' },

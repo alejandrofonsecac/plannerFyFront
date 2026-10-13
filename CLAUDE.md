@@ -15,6 +15,9 @@ compartilhadas de arquitetura, contratos e segurança.
 - Sessão: access token somente em memória, enviado apenas à API configurada e
   renovado pelo cookie HttpOnly via `/users/refresh`. Consulte
   [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md).
+- Preferências por usuário: em toda atualização, verifique se ela cria ou altera uma
+  configuração do usuário; se sim, registre-a com `PreferenceStore.define()` (sem mudar
+  o backend). Consulte [docs/USER_PREFERENCES.md](docs/USER_PREFERENCES.md).
 - Agenda: consulte o [mapa da funcionalidade](src/app/pages/schedule/README.md) quando
   trabalhar nela.
 

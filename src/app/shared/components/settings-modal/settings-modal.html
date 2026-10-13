@@ -223,5 +223,36 @@
         </section>
       }
     </div>
+
+    <footer class="settings-modal__sync" role="status" aria-live="polite">
+      @switch (preferences.status()) {
+        @case ('loading') {
+          <mat-icon aria-hidden="true">sync</mat-icon>
+          <span>Carregando as preferências da sua conta…</span>
+        }
+        @case ('saving') {
+          <mat-icon aria-hidden="true">sync</mat-icon>
+          <span>Salvando na sua conta…</span>
+        }
+        @case ('saved') {
+          <mat-icon aria-hidden="true">cloud_done</mat-icon>
+          <span>Preferências salvas na sua conta.</span>
+        }
+        @case ('error') {
+          <mat-icon aria-hidden="true" class="settings-modal__sync-error">cloud_off</mat-icon>
+          <span>
+            Não foi possível sincronizar com a sua conta. As alterações valem apenas neste
+            navegador por enquanto.
+          </span>
+          <button type="button" class="settings-modal__sync-retry" (click)="preferences.retry()">
+            Tentar novamente
+          </button>
+        }
+        @default {
+          <mat-icon aria-hidden="true">cloud</mat-icon>
+          <span>Estas preferências acompanham a sua conta em qualquer dispositivo.</span>
+        }
+      }
+    </footer>
   </section>
 </div>

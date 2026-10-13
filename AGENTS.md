@@ -42,6 +42,22 @@ servidor.
 - Preserve design tokens, acessibilidade por teclado e estados de carregamento, vazio,
   erro e sucesso. Não faça refatorações amplas fora do pedido.
 
+## Preferências por usuário
+
+Configurações de interface escolhidas pelo usuário pertencem à conta e acompanham o
+usuário em qualquer dispositivo. A API guarda um documento JSON por conta
+(`GET`/`PATCH /users/me/preferences`) sem interpretar as chaves; o frontend define quais
+preferências existem, seus valores aceitos e padrões, e usa o `localStorage` só como cache.
+
+**Em toda atualização, verifique se ela cria ou altera uma configuração do usuário; se
+sim, registre-a como preferência por usuário.** Para uma preferência visual basta
+`PreferenceStore.define()` no serviço do frontend que é dono do estado, com chave
+`camelCase` estável, padrão e validação, além de testes e uma linha na tabela de
+`docs/USER_PREFERENCES.md` — sem migration nem mudança no backend. Se o valor passar a
+influenciar regras ou cálculos do servidor (disponibilidade, datas, limites), ele deixa
+de ser preferência visual: crie um campo próprio validado no backend. Rascunhos, abas
+abertas e outros estados temporários de tela não são preferências.
+
 ## Fluxo e validação
 
 1. Defina caso de uso, usuário, contrato e resultados (sucesso e erro).

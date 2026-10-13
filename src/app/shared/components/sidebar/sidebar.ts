@@ -4,13 +4,9 @@ import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AppLogo } from '../app-logo/app-logo';
 import { NAVIGATION_SECTIONS } from './navigation-sections';
-import { SidebarState } from './sidebar-state';
+import { clampSidebarWidth, SidebarState } from './sidebar-state';
 
 const MOBILE_SIDEBAR_WIDTH = 280;
-const MIN_SIDEBAR_WIDTH = 240;
-const MAX_SIDEBAR_WIDTH = 340;
-const DEFAULT_SIDEBAR_WIDTH = 280;
-const SIDEBAR_WIDTH_STORAGE_KEY = 'agenda.sidebar-width';
 
 @Component({
   selector: 'app-sidebar',
@@ -33,7 +29,9 @@ export class Sidebar implements OnDestroy {
 
   readonly viewportWidth = this.sidebarState.viewportWidth;
   readonly sidebarOpen = this.sidebarState.isOpen;
-  readonly sidebarWidth = signal(this.getStoredSidebarWidth());
+  /** Largura durante o arraste; só é gravada em SidebarState ao soltar. */
+  private readonly dragWidth = signal<number | null>(null);
+  readonly sidebarWidth = computed(() => this.dragWidth() ?? this.sidebarState.width());
   readonly isResizing = signal(false);
 
   readonly isDesktop = this.sidebarState.isDesktop;
@@ -80,8 +78,7 @@ export class Sidebar implements OnDestroy {
     this.isResizing.set(true);
 
     this.resizeMoveListener = (moveEvent: PointerEvent) => {
-      const nextWidth = this.clampWidth(startWidth + moveEvent.clientX - startX);
-      this.sidebarWidth.set(nextWidth);
+      this.dragWidth.set(clampSidebarWidth(startWidth + moveEvent.clientX - startX));
     };
     this.resizeEndListener = () => this.stopResize();
 
@@ -106,30 +103,11 @@ export class Sidebar implements OnDestroy {
       this.resizeEndListener = undefined;
     }
 
-    if (this.isResizing() && saveWidth) {
-      this.saveSidebarWidth();
+    const width = this.dragWidth();
+    if (this.isResizing() && saveWidth && width !== null) {
+      this.sidebarState.setWidth(width);
     }
+    this.dragWidth.set(null);
     this.isResizing.set(false);
-  }
-
-  private getStoredSidebarWidth() {
-    try {
-      const storedWidth = Number(localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY));
-      return Number.isFinite(storedWidth) ? this.clampWidth(storedWidth) : DEFAULT_SIDEBAR_WIDTH;
-    } catch {
-      return DEFAULT_SIDEBAR_WIDTH;
-    }
-  }
-
-  private saveSidebarWidth() {
-    try {
-      localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(this.sidebarWidth()));
-    } catch {
-      // A interface continua funcional caso o armazenamento esteja indisponível.
-    }
-  }
-
-  private clampWidth(width: number) {
-    return Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, width));
   }
 }
