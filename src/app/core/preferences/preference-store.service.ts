@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { inject, Injectable, signal, type WritableSignal } from '@angular/core';
-import type { PreferenceDefinition, UserPreference } from './user-preferences.model';
+import type { PreferenceDefinition, UserPreference } from './model/user-preferences.model';
 
 interface Entry {
   definition: PreferenceDefinition<unknown>;
@@ -32,7 +32,10 @@ export class PreferenceStore {
       this.defineListeners.forEach((listener) => listener(key));
     }
     const value = this.entry(key).value as WritableSignal<T>;
-    return { key, value: value.asReadonly(), set: (next) => this.change(key, next) };
+    
+    return {
+      key, value: value.asReadonly(), set: (next) => this.change(key, next) 
+    };
   }
 
   keys(): string[] {

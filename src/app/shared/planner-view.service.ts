@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { PreferenceStore } from '../core/preferences/preference-store.service';
-import { isIntegerBetween, oneOf } from '../core/preferences/preference-values';
+import { isIntegerBetween, oneOf } from '../core/preferences/model/preference-values';
 
 export type PlannerDisplay = 'compact' | 'periods' | 'radial';
 

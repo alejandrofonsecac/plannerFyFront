@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, effect, inject } from '@angular/core';
 import { PreferenceStore } from '../core/preferences/preference-store.service';
-import { oneOf } from '../core/preferences/preference-values';
+import { oneOf } from '../core/preferences/model/preference-values';
 
 export type Theme = 'light' | 'dark' | 'high-contrast' | 'system';
 export type AccentId = 'indigo' | 'teal' | 'orange' | 'pink' | 'blue';

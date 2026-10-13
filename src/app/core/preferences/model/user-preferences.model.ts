@@ -6,7 +6,6 @@ import type { Signal } from '@angular/core';
  * Veja docs/USER_PREFERENCES.md.
  */
 export interface PreferenceDefinition<T> {
-  /** Chave no documento da conta: camelCase e estável depois de publicada. */
   key: string;
   defaultValue: T;
   /** Converte um valor desconhecido (cache local ou conta); `undefined` quando inválido. */

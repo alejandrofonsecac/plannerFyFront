@@ -4,7 +4,7 @@ import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { AuthSession } from '../auth/session/auth-session.service';
 import { API_BASE_URL } from '../data-access/api-client.service';
 import { PreferenceStore } from './preference-store.service';
-import type { PreferencesSyncStatus, UserPreferencesResponse } from './user-preferences.model';
+import type { PreferencesSyncStatus, UserPreferencesResponse } from './model/user-preferences.model';
 
 /** Conta cujas preferências estão no cache local deste navegador. */
 export const PREFERENCES_OWNER_STORAGE_KEY = 'plannerfy-preferences-owner';
@@ -57,7 +57,6 @@ export class UserPreferencesService {
     });
   }
 
-  /** Repete a operação que falhou: carregar a conta ou gravar as alterações pendentes. */
   retry(): void {
     if (!this.userId) return;
     if (this.remote === null) this.load(this.userId);
@@ -112,8 +111,7 @@ export class UserPreferencesService {
     clearTimeout(this.saveTimer);
     this.saveTimer = setTimeout(() => this.save(), PREFERENCES_SAVE_DELAY_MS);
   }
-
-  /** Uma gravação por vez, sempre com os valores mais recentes das chaves alteradas. */
+  
   private save(): void {
     clearTimeout(this.saveTimer);
     const userId = this.userId;
