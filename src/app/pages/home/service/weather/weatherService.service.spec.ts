@@ -91,6 +91,23 @@ describe('WeatherService', () => {
     expect(service.loading()).toBe(false);
   });
 
+  it('accepts weather without a resolved city', () => {
+    mockGeolocation();
+    service.load();
+    http.expectOne(() => true).flush({ temperature: 18, city: null, condition: 'Nublado' });
+
+    expect(service.weather()).toEqual({ temperature: 18, city: null, condition: 'Nublado' });
+    expect(service.error()).toBeNull();
+  });
+
+  it('reports other HTTP failures with the generic message', () => {
+    mockGeolocation();
+    service.load();
+    http.expectOne(() => true).flush({}, { status: 500, statusText: 'Server Error' });
+
+    expect(service.error()).toContain('Não foi possível consultar');
+  });
+
   it('reports denied location permission without an HTTP request', () => {
     mockGeolocation(true);
     service.load();
@@ -114,7 +131,7 @@ describe('WeatherService', () => {
     service.load();
     http.expectOne(() => true).flush({}, { status: 502, statusText: 'Bad Gateway' });
 
-    expect(service.error()).toContain('Não foi possível consultar');
+    expect(service.error()).toContain('indisponível no momento');
     expect(service.loading()).toBe(false);
     service.load();
     http.expectOne(() => true).flush({ temperature: 22, city: 'São Paulo', condition: 'Chuva' });
