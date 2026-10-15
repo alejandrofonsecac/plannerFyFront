@@ -1,5 +1,6 @@
 export interface WeatherResponse {
   temperature: number;
-  city: string;
+  /** Null when the backend could not resolve the coordinates to a place. */
+  city: string | null;
   condition: string;
 }

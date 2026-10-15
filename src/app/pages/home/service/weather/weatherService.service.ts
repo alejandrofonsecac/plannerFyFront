@@ -65,7 +65,9 @@ export class WeatherService {
         error: (error: unknown) => {
           this.errorState.set(
             error instanceof HttpErrorResponse
-              ? 'Não foi possível consultar o clima. Tente novamente mais tarde.'
+              ? error.status === 502 || error.status === 503 || error.status === 504
+                ? 'O serviço de clima está indisponível no momento. Tente novamente mais tarde.'
+                : 'Não foi possível consultar o clima. Tente novamente mais tarde.'
               : error instanceof TimeoutError
                 ? 'A consulta do clima demorou para responder. Tente novamente.'
                 : error instanceof Error

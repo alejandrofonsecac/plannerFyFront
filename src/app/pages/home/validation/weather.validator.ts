@@ -23,8 +23,7 @@ export class WeatherValidator {
     if (
       typeof data.temperature !== 'number' ||
       !Number.isFinite(data.temperature) ||
-      typeof data.city !== 'string' ||
-      !data.city.trim() ||
+      (data.city !== null && typeof data.city !== 'string') ||
       typeof data.condition !== 'string' ||
       !data.condition.trim()
     ) {
@@ -33,7 +32,7 @@ export class WeatherValidator {
 
     return {
       temperature: data.temperature,
-      city: data.city.trim(),
+      city: data.city?.trim() || null,
       condition: data.condition.trim(),
     };
   }
