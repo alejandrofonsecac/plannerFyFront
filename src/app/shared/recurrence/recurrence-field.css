@@ -56,6 +56,24 @@ button:focus-visible {
   outline: 2px solid var(--color-brand-primary);
   outline-offset: 3px;
 }
+.recurrence__weekdays {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  margin-top: 0.875rem;
+  color: var(--color-text-main);
+  cursor: pointer;
+}
+.recurrence__weekdays input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--color-brand-primary);
+  cursor: inherit;
+}
 .recurrence__shortcut {
   margin-top: 0.6rem;
   padding: 0.35rem 0.65rem;

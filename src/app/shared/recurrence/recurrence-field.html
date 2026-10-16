@@ -22,6 +22,10 @@
       </label>
     }
   </div>
+  <label class="recurrence__weekdays">
+    <input type="checkbox" [checked]="weekdaysOnly()" (change)="changeWeekdaysOnly($event)" />
+    Apenas dias úteis
+  </label>
   @if (value().frequency) {
     <button
       type="button"
@@ -35,6 +39,12 @@
       Cada ocorrência tem sua própria conclusão. As próximas continuam na agenda e as concluídas
       ficam no histórico.
     </p>
+    @if (weekdaysOnly()) {
+      <p>
+        Repete de segunda a sexta. Sábados e domingos ficam de fora, mesmo que a primeira data caia
+        em um deles. Feriados não são pulados.
+      </p>
+    }
     @if (value().frequency === 'MONTHLY' || value().frequency === 'YEARLY') {
       <p>Repete na mesma data. Meses ou anos em que ela não existe são pulados.</p>
     }
