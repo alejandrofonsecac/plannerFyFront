@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import {
   RECURRENCE_OPTIONS,
@@ -18,11 +18,26 @@ export class RecurrenceField {
   readonly startDate = input('');
   readonly disabled = input(false);
   readonly options = RECURRENCE_OPTIONS;
+  readonly weekdaysOnly = computed(
+    () => this.value().frequency === 'DAILY' && !!this.value().weekdaysOnly,
+  );
 
   changeFrequency(event: Event): void {
+    const frequency = (event.target as HTMLSelectElement).value as RecurrenceFrequency;
     this.value.update((value) => ({
       ...value,
-      frequency: (event.target as HTMLSelectElement).value as RecurrenceFrequency,
+      frequency,
+      weekdaysOnly: frequency === 'DAILY' && !!value.weekdaysOnly,
+    }));
+  }
+
+  // Weekdays only is a daily repetition, so checking it also selects "Todo dia".
+  changeWeekdaysOnly(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.value.update((value) => ({
+      ...value,
+      frequency: checked ? 'DAILY' : value.frequency,
+      weekdaysOnly: checked,
     }));
   }
 

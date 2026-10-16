@@ -9,7 +9,12 @@ export interface RecurrenceFields {
 export interface RecurrenceDraft {
   frequency: RecurrenceFrequency;
   until: string;
+  /** Daily repetition from Monday to Friday; only meaningful with `DAILY`. */
+  weekdaysOnly?: boolean;
 }
+
+/** Day list the API accepts, together with `FREQ=DAILY`, to skip weekends. */
+const WEEKDAYS_ONLY_RULE = 'BYDAY=MO,TU,WE,TH,FR';
 
 export const RECURRENCE_OPTIONS: { value: RecurrenceFrequency; label: string }[] = [
   { value: '', label: 'Não repetir' },
@@ -21,15 +26,18 @@ export const RECURRENCE_OPTIONS: { value: RecurrenceFrequency; label: string }[]
 
 /** Serializes the user's choice; occurrence dates are generated only by the API. */
 export function recurrencePayload(draft: RecurrenceDraft): RecurrenceFields {
+  const weekdays =
+    draft.frequency === 'DAILY' && draft.weekdaysOnly ? `;${WEEKDAYS_ONLY_RULE}` : '';
   return {
     isRecurring: !!draft.frequency,
     recurrenceRule: draft.frequency
-      ? `FREQ=${draft.frequency};UNTIL=${draft.until.replaceAll('-', '')}`
+      ? `FREQ=${draft.frequency}${weekdays};UNTIL=${draft.until.replaceAll('-', '')}`
       : '',
   };
 }
 
 export function recurrenceLabel(item: RecurrenceFields): string {
+  if (item.recurrenceRule?.split(';').includes(WEEKDAYS_ONLY_RULE)) return 'Dias úteis';
   const frequency = item.recurrenceRule?.match(/(?:^|;)FREQ=([^;]+)/)?.[1];
   return (
     RECURRENCE_OPTIONS.find((option) => option.value === frequency)?.label ??
