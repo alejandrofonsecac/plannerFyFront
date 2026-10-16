@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PreferenceStore } from './preference-store.service';
-import { oneOf } from './preference-values';
+import { oneOf } from './model/preference-values';
 
 const COLOR = {
   key: 'color',

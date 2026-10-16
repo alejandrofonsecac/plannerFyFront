@@ -14,8 +14,8 @@ import { ThemeService } from '../../shared/theme.service';
 import { PlannerViewService } from '../../shared/planner-view.service';
 import { SidebarState } from '../../shared/components/sidebar/sidebar-state';
 import { PreferenceStore } from './preference-store.service';
-import { oneOf } from './preference-values';
-import type { UserPreferencesResponse } from './user-preferences.model';
+import { oneOf } from './model/preference-values';
+import type { UserPreferencesResponse } from './model/user-preferences.model';
 import {
   PREFERENCES_OWNER_STORAGE_KEY,
   PREFERENCES_SAVE_DELAY_MS,

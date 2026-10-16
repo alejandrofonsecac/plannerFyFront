@@ -129,7 +129,7 @@ function dashboard(
       value: availability ? `${hidesSleep ? availableBlocks : availability.availableHours}h` : null,
       description: availability
         ? hidesSleep
-          ? `${availableBlocks} de ${slots.length} blocos livres`
+          ? `${availableBlocks} de ${slots.length} blocos livres, sem o horário de sono`
           : `${availability.availableBlocks} de ${availability.totalBlocks} blocos livres`
         : null,
       segments: availability
